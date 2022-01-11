@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -170,7 +171,7 @@ fun CombinedText(
                     //isInError = true
                 } else {
                     //isInError = false
-                    onTextReady(changedText.trim())
+                    onTextReady(changedText)
                 }
             }
         },
@@ -179,7 +180,7 @@ fun CombinedText(
         value = changedText,
         label = { Text(text = if (!isInError) label else ResString.emptyError) },
         onValueChange = { newText ->
-            changedText = newText.trimStart { it == '0' }
+            changedText = newText.trim()
             isInError = changedText.isEmpty()
         }
     )
@@ -264,7 +265,9 @@ fun ConsoleOutput(modifier: Modifier = Modifier, controller: FireController) {
                     is ConsoleItem.Output -> Color.White
                     is ConsoleItem.Input -> Color.Green
                 }
-                Text(it.data, color = color, modifier = Modifier.fillMaxWidth())
+                SelectionContainer {
+                    Text(it.data, color = color, modifier = Modifier.fillMaxWidth())
+                }
             }
         }
     }

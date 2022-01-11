@@ -11,14 +11,17 @@ group = "com.poud"
 version = "1.0.1"
 
 repositories {
+    jcenter()
     google()
     mavenCentral()
+    maven("https//maven.google.com")
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
     implementation(compose.desktop.currentOs)
     testImplementation("junit:junit:4.13")
+    implementation("com.googlecode.json-simple:json-simple:1.1.1")
 }
 
 tasks.withType<KotlinCompile>() {

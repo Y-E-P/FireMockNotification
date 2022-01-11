@@ -17,7 +17,7 @@ class FireController {
     var onConsoleOpen: (Boolean) -> Unit = {}
     private var idCounter: Int = 2
 
-    val model: ParamsModel = ParamsModel()
+    var model: ParamsModel = ParamsModel()
     val consoleData: MutableList<ConsoleItem> = mutableListOf()
     private var isConsoleOpened: Boolean = false
 
@@ -84,7 +84,7 @@ class FireController {
     }
 
     fun editAppPackage(packageName: String) {
-        model.intent = packageName
+        model.packageName = packageName
         notifyChanges()
     }
 
