@@ -1,7 +1,9 @@
 package resources
 
 object ResString {
+    const val APP_NAME: String = "NotifyMock"
     const val saveScheme: String = "Save scheme"
+    const val saveAsScheme: String = "Save as scheme"
     const val falseString: String = "false"
     const val trueString: String = "true"
     const val changeType: String = "Change type"
@@ -18,7 +20,11 @@ object ResString {
     const val intentLabel: String = "Intent"
     const val addParam: String = "Add param"
     const val file: String = "File"
-    const val loadScheme: String = "Load scheme"
+    const val loadScheme: String = "Open scheme"
     const val about: String = "About"
+    const val faq: String = "FAQ"
+    const val help: String = "Help"
     const val consoleOutput: String = "Console"
+    const val ok: String = "OK"
+    const val cancel: String = "Cancel"
 }
