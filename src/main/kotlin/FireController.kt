@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import repo.ModelParser
 import utils.prepareCommand
 import java.io.BufferedReader
 import java.io.File
@@ -13,8 +14,10 @@ class FireController {
     private val runtime by lazy { Runtime.getRuntime() }
 
     private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()
+    private val currentFile: File? = null
     var onConsoleOutput: (List<ConsoleItem>) -> Unit = {}
     var onConsoleOpen: (Boolean) -> Unit = {}
+    var onSaveAsCallback: (String) -> Unit = {}
     private var idCounter: Int = 2
 
     var model: ParamsModel = ParamsModel()
@@ -91,19 +94,22 @@ class FireController {
     fun loadScheme(file: File) {
         CoroutineScope(Dispatchers.Swing).launch {
             processFile(file).collect {
-                // onJsonLoaded(it)
+                model = it.data
+                notifyChanges()
             }
         }
     }
 
-    private fun processFile(file: File): Flow<Reaction.Success<String>> = flow {
-        file.readText().let {
-            // println("JsonObject : $toString")
-        }
+    private fun processFile(file: File): Flow<Reaction.Success<ParamsModel>> = flow {
+        emit(Reaction.Success(ModelParser().fromJson(file.readText())))
     }
 
     fun saveScheme() {
-        //TODO: will be implemented after first launch
+        currentFile?.writeText(ModelParser().toJson(model))
+    }
+
+    fun saveAsScheme() {
+        onSaveAsCallback(ModelParser().toJson(model))
     }
 
     private fun notifyChanges() {
