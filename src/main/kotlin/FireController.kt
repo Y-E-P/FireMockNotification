@@ -21,7 +21,7 @@ class FireController {
     private var idCounter: Int = 2
 
     val params: LinkedList<Item> = LinkedList()
-    val consoleData: List<ConsoleItem> = emptyList()
+    val consoleData: MutableList<ConsoleItem> = mutableListOf()
     private var isConsoleOpened: Boolean = false
 
     private val defaultParams: LinkedList<Item.ItemString> = LinkedList<Item.ItemString>().apply {
@@ -42,22 +42,22 @@ class FireController {
     }
 
     private fun startCommand(command: String) {
-        val process = runtime.exec(command)
+
         try {
+            val process = runtime.exec(command)
+            consoleData.add(ConsoleItem.Input(command))
+            val stdoutString: String =
+                process.inputStream.bufferedReader().use(BufferedReader::readText)
+            val stderrString: String =
+                process.errorStream.bufferedReader().use(BufferedReader::readText)
             process.waitFor()
+            consoleData.add(ConsoleItem.Output(stdoutString))
+            consoleData.add(ConsoleItem.Error(stderrString))
         } catch (e: InterruptedException) {
-            e.printStackTrace()
+            consoleData.add(ConsoleItem.Error(e.message ?: "Unknown error"))
+        } catch (e: Exception) {
+            consoleData.add(ConsoleItem.Error(e.message ?: "Unknown error"))
         }
-        val stdoutString: String =
-            process.inputStream.bufferedReader().use(BufferedReader::readText)
-        val stderrString: String =
-            process.errorStream.bufferedReader().use(BufferedReader::readText)
-        /*binding.command.text = command
-        binding.error.text = stderrString
-        binding.out.text = stdoutString*/
-        println(command)
-        println(stderrString)
-        println(stdoutString)
     }
 
     fun clear() {

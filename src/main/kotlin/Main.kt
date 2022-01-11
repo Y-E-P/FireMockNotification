@@ -257,12 +257,16 @@ fun ConsoleOutput(modifier: Modifier = Modifier, controller: FireController) {
                 Icon(if (isOpen) Icons.Default.Close else Icons.Default.ArrowDropDown, contentDescription = null)
             }
         }
-        LazyColumn(reverseLayout = true) {
+        LazyColumn(reverseLayout = true, modifier = Modifier.background(Color.Black).fillMaxSize()) {
             items(itemsList) {
-                Text(it.data, color = Color.White)
+                val color = when (it) {
+                    is ConsoleItem.Error -> Color.Red
+                    is ConsoleItem.Output -> Color.White
+                    is ConsoleItem.Input -> Color.Green
+                }
+                Text(it.data, color = color, modifier = Modifier.fillMaxWidth())
             }
         }
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black))
     }
 }
 
