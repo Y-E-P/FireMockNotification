@@ -4,6 +4,8 @@ import Item
 import ParamsModel
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
+import org.json.simple.JSONValue
+import org.json.simple.parser.ParseException
 
 
 class ModelParser {
@@ -41,7 +43,23 @@ class ModelParser {
     }
 
     fun fromJson(json: String): ParamsModel {
-        return ParamsModel()
+        val result = ParamsModel()
+        try {
+            val mainObj = JSONValue.parseWithException(json) as JSONObject
+            result.intent = mainObj[INTENT] as String
+            result.packageName = mainObj[PACKAGE] as String
+            val paramsArray = mainObj[PARAMS] as JSONArray
+            for (i in 0 until paramsArray.size) {
+                val paramObj = (paramsArray[i] as JSONObject)
+                val key: String = paramObj[KEY] as String
+                val value = paramObj[VALUE] as String
+                result.addItem(i, Item.ItemString(i, key, value))
+            }
+        } catch (e: ParseException) {
+            e.printStackTrace()
+        }
+
+        return result
     }
 
 }
