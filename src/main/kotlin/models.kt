@@ -44,17 +44,17 @@ sealed class Reaction<out T> {
 }
 
 data class ParamsModel(
-    var intent: Item.ItemString,
-    val packageName: Item.ItemString,
+    var intent: String = "",
+    var packageName: String = "",
     val params: LinkedList<Item> = LinkedList()
 ) {
 
-    fun updateIntent(newIntent: Item.ItemString){
-        this.intent = newIntent
-    }
-
     fun addItem(id: Int) {
         params.add(Item.ItemString(id, "key", "value"))
+    }
+
+    fun updateParam(index: Int, item: Item){
+        params[index] = item
     }
 
     fun removeItem(index: Int) {

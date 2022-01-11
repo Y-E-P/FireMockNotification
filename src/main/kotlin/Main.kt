@@ -91,7 +91,7 @@ fun App(controller: FireController) {
 fun ContentEdit(modifier: Modifier, controller: FireController) {
     var isEnabled by remember { mutableStateOf(false) }
     controller.addOnDataChangeListener {
-        isEnabled = it.isNotEmpty()
+        isEnabled = it.params.isNotEmpty()
     }
     Column(modifier) {
         val buttonModifier = Modifier.padding(4.dp)
@@ -115,9 +115,9 @@ fun ContentEdit(modifier: Modifier, controller: FireController) {
 
 @Composable
 fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
-    var itemsList by mutableStateOf(controller.params.toMutableStateList())
+    var itemsList by mutableStateOf(controller.model.params.toMutableStateList())
     controller.addOnDataChangeListener {
-        itemsList = it.toMutableStateList()
+        itemsList = it.params.toMutableStateList()
     }
     Column(modifier.fillMaxSize()) {
         DefaultParams(Modifier.padding(6.dp), controller)
@@ -130,8 +130,8 @@ fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
         }
         LazyColumn {
             itemsIndexed(itemsList, key = { _, item -> item.id }) { index, item ->
-                ParamItemView(index = index, item = item, onChanged = { indexChanged, key, value ->
-                    controller.changeData(indexChanged, key, value)
+                ParamItemView(index = index, item = item, onChanged = { indexChanged, id, key, value ->
+                    controller.changeData(indexChanged, id, key, value)
                 }, onRemoved = {
                     controller.removeItem(it)
                 })
@@ -190,13 +190,13 @@ fun ParamItemView(
     modifier: Modifier = Modifier,
     index: Int,
     item: Item,
-    onChanged: (index: Int, key: String, value: String) -> Unit,
+    onChanged: (index: Int, id: Int, key: String, value: String) -> Unit,
     onRemoved: (index: Int) -> Unit,
 ) {
-    var dataType = remember { mutableStateOf(item.type()) }
+    val dataType = remember { mutableStateOf(item.type()) }
     Row(modifier = modifier.wrapContentSize()) {
         CombinedText(label = ResString.keyLabel, onTextReady = {
-            onChanged(index, it, (item as Item.ItemString).str)
+            onChanged(index, item.id, it, (item as Item.ItemString).str)
         })
         Spacer(Modifier.width(6.dp))
         if (dataType.value == DataType.BOOLEAN) {
@@ -215,7 +215,7 @@ fun ParamItemView(
                 keyboardType = keyboardType,
                 label = ResString.valueLabel,
                 onTextReady = {
-                    onChanged(index, item.key, it)
+                    onChanged(index, item.id, item.key, it)
                 })
         }
         Spacer(Modifier.width(6.dp))

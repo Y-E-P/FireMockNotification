@@ -1,7 +1,7 @@
 package utils
 
 import Item
-import java.util.*
+import ParamsModel
 
 /**
  * Documentation https://developer.android.com/studio/command-line/adb#IntentSpec
@@ -19,16 +19,16 @@ Add float data as a key-value pair.
 
 const val BROADCAST = "adb shell am broadcast"
 
-fun LinkedList<Item>.prepareCommand(intent: String, receiver: String): String {
+fun ParamsModel.prepareCommand(): String {
     var command = BROADCAST.plus(" ")
         .plus(CommandLineType.Receiver.type)
         .plus(" ")
-        .plus(receiver)
+        .plus(this.packageName)
         .plus(" ")
         .plus(CommandLineType.Intent.type)
         .plus(" ")
-        .plus(intent)
-    for (item in this) {
+        .plus(this.intent)
+    for (item in this.params) {
         command = command.plus(" ").plus(item.commandType().type).plus(" ")
         command = when (item) {
             is Item.ItemString -> command.plus(item.key).plus(" ").plus(item.str)

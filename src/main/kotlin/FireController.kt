@@ -8,37 +8,29 @@ import kotlinx.coroutines.swing.Swing
 import utils.prepareCommand
 import java.io.BufferedReader
 import java.io.File
-import java.util.*
 
 class FireController {
     private val runtime by lazy { Runtime.getRuntime() }
 
-    private val dataListeners: ArrayList<(LinkedList<Item>) -> Unit> = ArrayList()
+    private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()
     var onConsoleOutput: (List<ConsoleItem>) -> Unit = {}
     var onConsoleOpen: (Boolean) -> Unit = {}
-    var onDefaultsChanged: (LinkedList<Item.ItemString>) -> Unit = {}
-    var onAddNewParam: (index: Int, data: Item) -> Unit = { _, _ -> }
     private var idCounter: Int = 2
 
-    val params: LinkedList<Item> = LinkedList()
+    val model: ParamsModel = ParamsModel()
     val consoleData: MutableList<ConsoleItem> = mutableListOf()
     private var isConsoleOpened: Boolean = false
 
-    private val defaultParams: LinkedList<Item.ItemString> = LinkedList<Item.ItemString>().apply {
-        add(Item.ItemString(0, "intent", ""))
-        add(Item.ItemString(1, "package", ""))
-    }
-
-    fun addOnDataChangeListener(onDataChanged: (LinkedList<Item>) -> Unit) {
+    fun addOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
         dataListeners.add(onDataChanged)
     }
 
-    fun removeOnDataChangeListener(onDataChanged: (LinkedList<Item>) -> Unit) {
+    fun removeOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
         dataListeners.remove(onDataChanged)
     }
 
     fun run() {
-        startCommand(params.prepareCommand(defaultParams[0].str, defaultParams[1].str))
+        startCommand(model.prepareCommand())
     }
 
     private fun startCommand(command: String) {
@@ -61,7 +53,7 @@ class FireController {
     }
 
     fun clear() {
-        this.params.clear()
+        this.model.clear()
         notifyChanges()
     }
 
@@ -71,29 +63,29 @@ class FireController {
     }
 
     fun addNewItem() {
-        params.add(Item.ItemString(idCounter++, "key", "value"))
+        model.addItem(idCounter++)
         notifyChanges()
     }
 
-    fun changeData(index: Int, key: String, value: String) {
-        updateData(index, key, value)
+    fun changeData(index: Int, id: Int, key: String, value: String) {
+        updateData(index, id, key, value)
         notifyChanges()
     }
 
     fun removeItem(index: Int) {
-        params.removeAt(index).run {
+        model.removeItem(index).run {
             notifyChanges()
         }
     }
 
     fun editIntent(intent: String) {
-        defaultParams[0] = Item.ItemString(0, "intent", intent)
-        notifyDefaultsChanges()
+        model.intent = intent
+        notifyChanges()
     }
 
     fun editAppPackage(packageName: String) {
-        defaultParams[1] = Item.ItemString(1, "package", packageName)
-        notifyDefaultsChanges()
+        model.intent = packageName
+        notifyChanges()
     }
 
     fun loadScheme(file: File) {
@@ -116,15 +108,11 @@ class FireController {
 
     private fun notifyChanges() {
         for (listener in dataListeners) {
-            listener(params)
+            listener(model)
         }
     }
 
-    private fun notifyDefaultsChanges() {
-        onDefaultsChanged(defaultParams)
-    }
-
-    private fun updateData(index: Int, key: String, value: String) {
-        params[index] = Item.ItemString(params[index].id, key, value)
+    private fun updateData(index: Int, id: Int, key: String, value: String) {
+        model.updateParam(index, Item.ItemString(id, key, value))
     }
 }
