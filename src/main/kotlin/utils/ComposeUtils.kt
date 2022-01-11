@@ -1,7 +1,5 @@
 package utils
 
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import java.awt.Component
 import java.io.File
 import javax.swing.JFileChooser
@@ -26,4 +24,16 @@ fun Component.openFile(): File? {
         println("Selected file: " + selectedFile.absolutePath)
         selectedFile
     } else null
+}
+
+fun Component.saveFile(json: String) {
+    val fileChooser = JFileChooser()
+    fileChooser.currentDirectory = File(System.getProperty("user.home"))
+    fileChooser.fileFilter = FileNameExtensionFilter("JSON files (*.json)", "json")
+    val result = fileChooser.showSaveDialog(this)
+    if (result == JFileChooser.APPROVE_OPTION) {
+        val selectedFile = fileChooser.selectedFile
+        selectedFile.writeText(json)
+        println("Selected file: " + selectedFile.absolutePath)
+    }
 }
