@@ -49,11 +49,11 @@ data class ParamsModel(
     val params: LinkedList<Item> = LinkedList()
 ) {
 
-    fun addItem(id: Int, item: Item = Item.ItemString(id, "key", "value")) {
+    fun addItem(id: Int, item: Item = Item.ItemString(id, "", "")) {
         params.add(item)
     }
 
-    fun updateParam(index: Int, item: Item){
+    fun updateParam(index: Int, item: Item) {
         params[index] = item
     }
 
