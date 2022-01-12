@@ -10,15 +10,6 @@ import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
-/*
-fun Modifier.pointerMoveFilter(
-    onEnter: () -> Boolean = { true },
-    onExit: () -> Boolean = { true },
-    onMove: (Offset) -> Boolean = { true }
-): Modifier
-
-*/
-
 @OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.cursorForHorizontalResize(): Modifier = this.pointerHoverIcon(PointerIcon((Cursor(Cursor.N_RESIZE_CURSOR))))
 
