@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -23,7 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
@@ -155,11 +153,18 @@ fun ContentEdit(modifier: Modifier, controller: FireController) {
 @Composable
 fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
     var itemsList by mutableStateOf(controller.model.params.toMutableStateList())
+    var packageName by mutableStateOf(controller.model.packageName)
+    var intent by mutableStateOf(controller.model.intent)
     controller.addOnDataChangeListener {
         itemsList = it.params.toMutableStateList()
+        intent = it.packageName
+        packageName = it.intent
     }
     Column(modifier.fillMaxSize()) {
-        DefaultParams(Modifier.padding(6.dp), controller)
+        DefaultParams(Modifier.padding(6.dp), packageName, intent) { packageName, intent ->
+            controller.editAppPackage(packageName)
+            controller.editIntent(intent)
+        }
         Row(modifier = Modifier.wrapContentSize()) {
             Button(modifier = Modifier.padding(4.dp), onClick = {
                 controller.addNewItem()
@@ -180,14 +185,19 @@ fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
 }
 
 @Composable
-fun DefaultParams(modifier: Modifier = Modifier, controller: FireController) {
+fun DefaultParams(
+    modifier: Modifier = Modifier,
+    packageName: String,
+    intent: String,
+    onChanged: (packageName: String, intent: String) -> Unit
+) {
     Row(modifier = modifier.wrapContentSize()) {
-        CombinedText(label = ResString.intentLabel, onTextReady = {
-            controller.editIntent(it)
+        CombinedText(label = ResString.intentLabel, text = packageName, onTextReady = {
+            onChanged(it, intent)
         })
         Spacer(Modifier.width(6.dp))
-        CombinedText(label = ResString.packageLabel, onTextReady = {
-            controller.editAppPackage(it)
+        CombinedText(label = ResString.packageLabel, text = intent, onTextReady = {
+            onChanged(packageName, it)
         })
     }
 }
@@ -195,30 +205,21 @@ fun DefaultParams(modifier: Modifier = Modifier, controller: FireController) {
 @Composable
 fun CombinedText(
     modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text,
     label: String,
+    text: String,
     onTextReady: (text: String) -> Unit
 ) {
-    var changedText by remember { mutableStateOf("") }
     var isInError by remember { mutableStateOf(false) }
     OutlinedTextField(
-        modifier = modifier.wrapContentWidth().onFocusChanged { focusState ->
-            when {
-                !focusState.hasFocus -> if (changedText.isEmpty()) {
-                    //isInError = true
-                } else {
-                    //isInError = false
-                    onTextReady(changedText)
-                }
-            }
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        modifier = modifier.wrapContentWidth(),
         isError = isInError,
-        value = changedText,
+        value = text,
         label = { Text(text = if (!isInError) label else ResString.emptyError) },
         onValueChange = { newText ->
-            changedText = newText.trim()
-            isInError = changedText.isEmpty()
+            if (newText != text) {
+                onTextReady(newText.trim())
+            }
+            isInError = newText.isEmpty()
         }
     )
 }
@@ -233,7 +234,7 @@ fun ParamItemView(
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
-        CombinedText(label = ResString.keyLabel, onTextReady = {
+        CombinedText(label = ResString.keyLabel, text = item.key, onTextReady = {
             onChanged(index, item.id, it, (item as Item.ItemString).str)
         })
         Spacer(Modifier.width(6.dp))
@@ -250,8 +251,8 @@ fun ParamItemView(
             }
             CombinedText(
                 modifier = Modifier.align(Alignment.CenterVertically),
-                keyboardType = keyboardType,
                 label = ResString.valueLabel,
+                text = item.dataAsString(),
                 onTextReady = {
                     onChanged(index, item.id, item.key, it)
                 })

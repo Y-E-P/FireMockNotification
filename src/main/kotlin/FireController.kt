@@ -37,7 +37,6 @@ class FireController {
     }
 
     private fun startCommand(command: String) {
-
         try {
             val process = runtime.exec(command)
             consoleData.add(ConsoleItem.Input(command))

@@ -4,8 +4,7 @@ sealed class Item(open val id: Int, open val key: String) {
     data class ItemString(
         override val id: Int,
         override val key: String,
-        val str: String,
-        val isRemovable: Boolean = true
+        val str: String
     ) : Item(id, key)
 
     data class ItemBoolean(
@@ -24,6 +23,15 @@ fun Item.type(): DataType =
         is Item.ItemFloat -> DataType.FLOAT
         is Item.ItemInt -> DataType.INTEGER
         is Item.ItemLong -> DataType.LONG
+    }
+
+fun Item.dataAsString(): String =
+    when (this) {
+        is Item.ItemString -> str
+        is Item.ItemBoolean -> this.boolean.toString()
+        is Item.ItemFloat -> this.number.toString()
+        is Item.ItemInt -> this.number.toString()
+        is Item.ItemLong -> this.number.toString()
     }
 
 enum class DataType {
