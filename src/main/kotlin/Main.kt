@@ -1,6 +1,12 @@
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,8 +27,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyShortcut
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
@@ -32,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import resources.ResString
+import utils.cursorForHorizontalResize
 import utils.openFile
 import java.util.*
 
@@ -74,16 +83,46 @@ fun main() = application {
     }
 }
 
+private class PanelsState {
+    val collapsedSize = 0.dp
+    var expandedSize by mutableStateOf(300.dp)
+    val expandedSizeMin = 100.dp
+    var isExpanded by mutableStateOf(true)
+    var splitterState = SplitterState()
+}
+
+class SplitterState {
+    var isResizing by mutableStateOf(false)
+}
+
 @Composable
 @Preview
 fun App(controller: FireController) {
+    val panelState = remember { PanelsState() }
+    val animatedSize = if (panelState.splitterState.isResizing) {
+        if (panelState.isExpanded) panelState.expandedSize else panelState.collapsedSize
+    } else {
+        animateDpAsState(
+            if (panelState.isExpanded) panelState.expandedSize else panelState.collapsedSize,
+            SpringSpec(stiffness = Spring.StiffnessLow)
+        ).value
+    }
+    controller.onConsoleOpen = {
+        panelState.isExpanded = it
+    }
     MaterialTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             ContentEdit(
                 modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
                 controller
             )
-            ConsoleOutput(modifier = Modifier.align(Alignment.BottomCenter), controller)
+            ConsoleOutput(
+                modifier = Modifier.align(Alignment.BottomCenter).height(animatedSize),
+                controller,
+                splitterState = panelState.splitterState
+            ) { delta ->
+                panelState.expandedSize = (panelState.expandedSize - delta).coerceAtLeast(panelState.expandedSizeMin)
+            }
         }
     }
 }
@@ -237,16 +276,31 @@ fun ParamItemView(
 
 
 @Composable
-fun ConsoleOutput(modifier: Modifier = Modifier, controller: FireController) {
-    var isOpen by remember { mutableStateOf(false) }
+fun ConsoleOutput(
+    modifier: Modifier = Modifier,
+    controller: FireController,
+    splitterState: SplitterState,
+    onResize: (delta: Dp) -> Unit
+) {
+    val density = LocalDensity.current
     var itemsList by mutableStateOf(controller.consoleData.toMutableStateList())
-    controller.onConsoleOpen = {
-        isOpen = it
-    }
     controller.onConsoleOutput = {
         itemsList = it.toMutableStateList()
     }
-    Column(modifier.height(if (isOpen) 500.dp else 0.dp).fillMaxWidth()) {
+    Column(modifier.fillMaxWidth()) {
+        Divider(modifier = Modifier.fillMaxWidth().height(2.dp).run {
+            return@run this.draggable(
+                state = rememberDraggableState {
+                    with(density) {
+                        onResize(it.toDp())
+                    }
+                },
+                orientation = Orientation.Vertical,
+                startDragImmediately = true,
+                onDragStarted = { splitterState.isResizing = true },
+                onDragStopped = { splitterState.isResizing = false },
+            ).cursorForHorizontalResize()
+        })
         Row(modifier = Modifier.fillMaxWidth().wrapContentHeight().background(Color.LightGray)) {
             Text(ResString.console, modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically))
             Spacer(modifier = Modifier.weight(1f))
@@ -255,7 +309,7 @@ fun ConsoleOutput(modifier: Modifier = Modifier, controller: FireController) {
                     .clickable(role = Role.Button) {
                         controller.openConsole()
                     }) {
-                Icon(if (isOpen) Icons.Default.Close else Icons.Default.ArrowDropDown, contentDescription = null)
+                Icon(Icons.Default.Close, contentDescription = null)
             }
         }
         LazyColumn(reverseLayout = true, modifier = Modifier.background(Color.Black).fillMaxSize()) {
