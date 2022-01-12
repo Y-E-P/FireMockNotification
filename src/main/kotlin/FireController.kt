@@ -69,8 +69,13 @@ class FireController {
         notifyChanges()
     }
 
-    fun changeData(index: Int, id: Int, key: String, value: String) {
-        updateData(index, id, key, value)
+    fun updateKey(index: Int, key: String) {
+        model.updateKey(index, key)
+        notifyChanges()
+    }
+
+    fun updateValue(index: Int, value: String) {
+        model.updateValue(index, value)
         notifyChanges()
     }
 

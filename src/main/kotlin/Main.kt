@@ -174,8 +174,10 @@ fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
         }
         LazyColumn {
             itemsIndexed(itemsList, key = { _, item -> item.id }) { index, item ->
-                ParamItemView(index = index, item = item, onChanged = { indexChanged, id, key, value ->
-                    controller.changeData(indexChanged, id, key, value)
+                ParamItemView(index = index, item = item, onKeyChanged = { indexChanged, key ->
+                    controller.updateKey(indexChanged, key)
+                }, onValueChanged = { indexChanged, value ->
+                    controller.updateValue(indexChanged, value)
                 }, onRemoved = {
                     controller.removeItem(it)
                 })
@@ -229,13 +231,14 @@ fun ParamItemView(
     modifier: Modifier = Modifier,
     index: Int,
     item: Item,
-    onChanged: (index: Int, id: Int, key: String, value: String) -> Unit,
+    onKeyChanged: (index: Int, key: String) -> Unit,
+    onValueChanged: (index: Int, value: String) -> Unit,
     onRemoved: (index: Int) -> Unit,
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
         CombinedText(label = ResString.keyLabel, text = item.key, onTextReady = {
-            onChanged(index, item.id, it, (item as Item.ItemString).str)
+            onKeyChanged(index, it)
         })
         Spacer(Modifier.width(6.dp))
         if (dataType.value == DataType.BOOLEAN) {
@@ -254,7 +257,7 @@ fun ParamItemView(
                 label = ResString.valueLabel,
                 text = item.dataAsString(),
                 onTextReady = {
-                    onChanged(index, item.id, item.key, it)
+                    onValueChanged(index, it)
                 })
         }
         Spacer(Modifier.width(6.dp))

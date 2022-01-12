@@ -1,19 +1,19 @@
 import java.util.*
 
-sealed class Item(open val id: Int, open val key: String) {
+sealed class Item(open val id: Int, open var key: String) {
     data class ItemString(
         override val id: Int,
-        override val key: String,
-        val str: String
+        override var key: String,
+        var str: String
     ) : Item(id, key)
 
     data class ItemBoolean(
-        override val id: Int, override val key: String, val boolean: Boolean
+        override val id: Int, override var key: String, val boolean: Boolean
     ) : Item(id, key)
 
-    data class ItemFloat(override val id: Int, override val key: String, val number: Float) : Item(id, key)
-    data class ItemInt(override val id: Int, override val key: String, val number: Int) : Item(id, key)
-    data class ItemLong(override val id: Int, override val key: String, val number: Long) : Item(id, key)
+    data class ItemFloat(override val id: Int, override var key: String, val number: Float) : Item(id, key)
+    data class ItemInt(override val id: Int, override var key: String, val number: Int) : Item(id, key)
+    data class ItemLong(override val id: Int, override var key: String, val number: Long) : Item(id, key)
 }
 
 fun Item.type(): DataType =
@@ -65,11 +65,21 @@ data class ParamsModel(
         params[index] = item
     }
 
+    fun updateKey(index: Int, key: String) {
+        params[index].key = key
+    }
+
+    fun updateValue(index: Int, value: String) {
+        (params[index] as Item.ItemString).str = value
+    }
+
     fun removeItem(index: Int) {
         params.removeAt(index)
     }
 
     fun clear() {
+        intent = ""
+        packageName = ""
         this.params.clear()
     }
 }
