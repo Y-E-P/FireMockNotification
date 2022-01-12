@@ -25,60 +25,59 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.swing.Swing
 import resources.ResString
+import resources.ResString.APP_NAME
+import ui.AboutDialog
 import utils.cursorForHorizontalResize
 import utils.openFile
+import utils.saveFile
+import java.awt.Dimension
 import java.util.*
 
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
+    val openDialog = remember { mutableStateOf(false) }
     val controller by lazy { FireController() }
-    if (isOpen) {
-        Window(onCloseRequest = {
-            isOpen = false
-        }) {
-            MenuBar {
-                Menu(ResString.file, mnemonic = 'F') {
-                    Item(
-                        ResString.saveScheme,
-                        enabled = false,
-                        onClick = { controller.saveScheme() },
-                        shortcut = KeyShortcut(Key.C, ctrl = true)
-                    )
-                    Item(
-                        ResString.loadScheme,
-                        enabled = false,
-                        onClick = {
-                            window.openFile()?.let {
-                                CoroutineScope(Dispatchers.Swing).launch {
-                                    controller.loadScheme(it)
-                                }
-                            }
-                        },
-                        shortcut = KeyShortcut(Key.V, ctrl = true)
-                    )
-                }
-                Menu(ResString.about, mnemonic = 'A') {
 
+    if (isOpen) {
+        Window(title = APP_NAME,
+            icon = loadSvgPainter(
+                this::class.java.classLoader.getResourceAsStream("notification_8.svg"),
+                LocalDensity.current
+            ),
+            onCloseRequest = {
+                isOpen = false
+            }) {
+            window.minimumSize = Dimension(1024, 768)
+            controller.onSaveAsCallback = {
+                window.saveFile(it)
+            }
+            FireMenu {
+                when (it) {
+                    MenuItem.ABOUT -> openDialog.value = true
+                    MenuItem.SAVE -> controller.saveScheme()
+                    MenuItem.SAVE_AS -> controller.saveAsScheme()
+                    MenuItem.OPEN -> {
+                        window.openFile()?.let { file -> controller.loadScheme(file) }
+                    }
                 }
             }
             App(controller)
+            if (openDialog.value) {
+                AboutDialog {
+                    openDialog.value = false
+                }
+            }
         }
     }
 }
