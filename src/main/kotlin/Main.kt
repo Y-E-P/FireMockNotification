@@ -175,7 +175,6 @@ fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
                     controller.removeItem(it)
                 })
             }
-
         }
     }
 }
@@ -233,7 +232,7 @@ fun ParamItemView(
     onRemoved: (index: Int) -> Unit,
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
-    Row(modifier = modifier.wrapContentSize()) {
+    Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
         CombinedText(label = ResString.keyLabel, onTextReady = {
             onChanged(index, item.id, it, (item as Item.ItemString).str)
         })
