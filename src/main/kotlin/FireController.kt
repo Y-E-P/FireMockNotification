@@ -14,7 +14,7 @@ class FireController {
     private val runtime by lazy { Runtime.getRuntime() }
 
     private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()
-    private val currentFile: File? = null
+    private var currentFile: File? = null
     var onConsoleOutput: (List<ConsoleItem>) -> Unit = {}
     var onConsoleOpen: (Boolean) -> Unit = {}
     var onSaveAsCallback: (String) -> Unit = {}
@@ -101,6 +101,7 @@ class FireController {
                 model = it.data
                 idCounter = model.params.last().id + 1
                 notifyChanges()
+                currentFile = file
             }
         }
     }
