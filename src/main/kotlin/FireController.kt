@@ -99,6 +99,7 @@ class FireController {
         CoroutineScope(Dispatchers.Swing).launch {
             processFile(file).collect {
                 model = it.data
+                idCounter = model.params.last().id + 1
                 notifyChanges()
             }
         }

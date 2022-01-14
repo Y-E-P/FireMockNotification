@@ -194,12 +194,12 @@ fun DefaultParams(
     onChanged: (packageName: String, intent: String) -> Unit
 ) {
     Row(modifier = modifier.wrapContentSize()) {
-        CombinedText(label = ResString.intentLabel, text = packageName, onTextReady = {
-            onChanged(it, intent)
+        CombinedText(label = ResString.intentLabel, text = intent, onTextReady = {
+            onChanged(packageName, it)
         })
         Spacer(Modifier.width(6.dp))
-        CombinedText(label = ResString.packageLabel, text = intent, onTextReady = {
-            onChanged(packageName, it)
+        CombinedText(label = ResString.packageLabel, text = packageName, onTextReady = {
+            onChanged(it, intent)
         })
     }
 }
@@ -213,7 +213,7 @@ fun CombinedText(
 ) {
     var isInError by remember { mutableStateOf(false) }
     OutlinedTextField(
-        modifier = modifier.wrapContentWidth(),
+        modifier = modifier,
         isError = isInError,
         value = text,
         label = { Text(text = if (!isInError) label else ResString.emptyError) },
@@ -237,7 +237,7 @@ fun ParamItemView(
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
-        CombinedText(label = ResString.keyLabel, text = item.key, onTextReady = {
+        CombinedText(modifier = Modifier.weight(0.3f), label = ResString.keyLabel, text = item.key, onTextReady = {
             onKeyChanged(index, it)
         })
         Spacer(Modifier.width(6.dp))
@@ -253,7 +253,7 @@ fun ParamItemView(
                 else -> KeyboardType.Text
             }
             CombinedText(
-                modifier = Modifier.align(Alignment.CenterVertically),
+                modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f),
                 label = ResString.valueLabel,
                 text = item.dataAsString(),
                 onTextReady = {
@@ -270,7 +270,8 @@ fun ParamItemView(
             dataType.value = it
         }
         IconButton(
-            modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically), onClick = { onRemoved(index) }) {
+            modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
+            onClick = { onRemoved(index) }) {
             Icon(Icons.Default.Delete, contentDescription = null)
         }
     }
