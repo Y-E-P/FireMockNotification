@@ -15,19 +15,19 @@ fun FrameWindowScope.FireMenu(onClickItem: (MenuItem) -> Unit) {
                 ResString.saveScheme,
                 enabled = true,
                 onClick = { onClickItem(MenuItem.SAVE) },
-                shortcut = KeyShortcut(Key.C, ctrl = true)
+                shortcut = KeyShortcut(Key.S, ctrl = true)
             )
             Item(
                 ResString.saveAsScheme,
                 enabled = true,
                 onClick = { onClickItem(MenuItem.SAVE_AS) },
-                shortcut = KeyShortcut(Key.V, ctrl = true)
+                shortcut = KeyShortcut(Key.S, ctrl = true, alt = true)
             )
             Item(
                 ResString.loadScheme,
                 enabled = true,
                 onClick = { onClickItem(MenuItem.OPEN) },
-                shortcut = KeyShortcut(Key.V, ctrl = true)
+                shortcut = KeyShortcut(Key.O, ctrl = true)
             )
         }
         Menu(ResString.help, mnemonic = 'A') {
