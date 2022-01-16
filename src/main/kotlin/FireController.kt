@@ -15,13 +15,17 @@ class FireController {
 
     private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()
     private var currentFile: File? = null
+    private val consoleModel = ConsoleModel()
     var onConsoleOutput: (List<ConsoleItem>) -> Unit = {}
+        set(value) {
+            field = value
+            consoleModel.onConsoleDataChanged = field
+        }
     var onConsoleOpen: (Boolean) -> Unit = {}
     var onSaveAsCallback: (String) -> Unit = {}
     private var idCounter: Int = 2
 
     var model: ParamsModel = ParamsModel()
-    val consoleData: MutableList<ConsoleItem> = mutableListOf()
     private var isConsoleOpened: Boolean = false
 
     fun addOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
@@ -39,18 +43,18 @@ class FireController {
     private fun startCommand(command: String) {
         try {
             val process = runtime.exec(command)
-            consoleData.add(ConsoleItem.Input(command))
+            consoleModel.emitInput(command)
             val stdoutString: String =
                 process.inputStream.bufferedReader().use(BufferedReader::readText)
             val stderrString: String =
                 process.errorStream.bufferedReader().use(BufferedReader::readText)
             process.waitFor()
-            consoleData.add(ConsoleItem.Output(stdoutString))
-            consoleData.add(ConsoleItem.Error(stderrString))
+            stdoutString.takeIf { it.isNotEmpty() }?.let { consoleModel.emitOutput(it) }
+            stderrString.takeIf { it.isNotEmpty() }?.let { consoleModel.emitError(stderrString) }
         } catch (e: InterruptedException) {
-            consoleData.add(ConsoleItem.Error(e.message ?: "Unknown error"))
+            consoleModel.emitError(e.message ?: "Unknown error")
         } catch (e: Exception) {
-            consoleData.add(ConsoleItem.Error(e.message ?: "Unknown error"))
+            consoleModel.emitError(e.message ?: "Unknown error")
         }
     }
 
@@ -74,8 +78,13 @@ class FireController {
         notifyChanges()
     }
 
-    fun updateValue(index: Int, value: String) {
+    fun updateValue(index: Int, value: Any) {
         model.updateValue(index, value)
+        notifyChanges()
+    }
+
+    fun updateType(index: Int, value: DataType) {
+        model.updateType(index, value)
         notifyChanges()
     }
 

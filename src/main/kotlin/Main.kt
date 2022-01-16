@@ -26,9 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import resources.ResString
@@ -144,6 +144,12 @@ fun ContentEdit(modifier: Modifier, controller: FireController) {
                 modifier = buttonModifier, onClick = { controller.openConsole() }) {
                 Text(text = ResString.consoleOutput)
             }
+            Spacer(Modifier.weight(1f))
+            DevicesDropdown(
+                modifier = buttonModifier,
+                type = Device("-1", "none", "No devices"),
+                arrayOf(Device("-1", "none", "No devices"))
+            ) {}
         }
         Divider(modifier = Modifier.fillMaxWidth().wrapContentHeight(), Color.Black)
         ParamsEditor(controller = controller)
@@ -180,6 +186,8 @@ fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
                     controller.updateValue(indexChanged, value)
                 }, onRemoved = {
                     controller.removeItem(it)
+                }, onTypeChanged = { indexChanged, type ->
+                    controller.updateType(indexChanged, type)
                 })
             }
         }
@@ -233,6 +241,7 @@ fun ParamItemView(
     item: Item,
     onKeyChanged: (index: Int, key: String) -> Unit,
     onValueChanged: (index: Int, value: String) -> Unit,
+    onTypeChanged: (index: Int, type: DataType) -> Unit,
     onRemoved: (index: Int) -> Unit,
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
@@ -243,15 +252,9 @@ fun ParamItemView(
         Spacer(Modifier.width(6.dp))
         if (dataType.value == DataType.BOOLEAN) {
             BooleanDropdown(modifier = Modifier.align(Alignment.CenterVertically), type = false) {
-
+                onValueChanged(index, it.toString())
             }
         } else {
-            val keyboardType = when (dataType.value) {
-                DataType.INTEGER,
-                DataType.FLOAT,
-                DataType.LONG -> KeyboardType.Number
-                else -> KeyboardType.Text
-            }
             CombinedText(
                 modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f),
                 label = ResString.valueLabel,
@@ -267,6 +270,7 @@ fun ParamItemView(
             type = item.type(),
             items = DataType.values()
         ) {
+            onTypeChanged(index, it)
             dataType.value = it
         }
         IconButton(
@@ -286,7 +290,7 @@ fun ConsoleOutput(
     onResize: (delta: Dp) -> Unit
 ) {
     val density = LocalDensity.current
-    var itemsList by mutableStateOf(controller.consoleData.toMutableStateList())
+    var itemsList by mutableStateOf(emptyList<ConsoleItem>().toMutableStateList())
     controller.onConsoleOutput = {
         itemsList = it.toMutableStateList()
     }
@@ -315,15 +319,27 @@ fun ConsoleOutput(
                 Icon(Icons.Default.Close, contentDescription = null)
             }
         }
-        LazyColumn(reverseLayout = true, modifier = Modifier.background(Color.Black).fillMaxSize()) {
-            items(itemsList) {
-                val color = when (it) {
-                    is ConsoleItem.Error -> Color.Red
-                    is ConsoleItem.Output -> Color.White
-                    is ConsoleItem.Input -> Color.Green
+        LazyColumn(modifier = Modifier.background(Color.Black).fillMaxSize()) {
+            items(itemsList, key = { it.id }) {
+                val color = when (it.type) {
+                    ConsoleItem.Type.ERROR -> Color.Red
+                    ConsoleItem.Type.OUTPUT -> Color.White
+                    ConsoleItem.Type.INPUT -> Color.Green
                 }
                 SelectionContainer {
-                    Text(it.data, color = color, modifier = Modifier.fillMaxWidth())
+                    Row {
+                        Text(
+                            it.time,
+                            color = Color.White,
+                            modifier = Modifier.wrapContentWidth().wrapContentHeight().align(Alignment.Top)
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Text(
+                            it.data,
+                            color = color,
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight().align(Alignment.Top)
+                        )
+                    }
                 }
             }
         }
@@ -398,6 +414,40 @@ fun BooleanDropdown(
                 onTypeChanged(false)
             }) {
                 Text(ResString.falseString)
+            }
+        }
+    }
+}
+
+@Composable
+fun DevicesDropdown(
+    modifier: Modifier = Modifier,
+    type: Device,
+    items: Array<Device>,
+    onDeviceChanged: (Device) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var data by remember { mutableStateOf(type) }
+    Box(modifier = modifier) {
+        Button(onClick = { expanded = true }) {
+            Text(text = data.name.uppercase(Locale.getDefault()), fontSize = 12.sp)
+            Icon(
+                if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
+                contentDescription = ResString.changeType
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            for (item in items) {
+                DropdownMenuItem(onClick = {
+                    data = item
+                    expanded = false
+                    onDeviceChanged(item)
+                }) {
+                    Text(item.name.uppercase(Locale.getDefault()), fontSize = 12.sp)
+                }
             }
         }
     }

@@ -32,7 +32,16 @@ class ModelParser {
             for (param in paramsModel.params) {
                 JSONObject().apply {
                     put(KEY, param.key)
-                    put(VALUE, (param as Item.ItemString).str)
+                    when (param) {
+                        is Item.ItemString -> param.str
+                        is Item.ItemBoolean -> param.boolean
+                        is Item.ItemInt -> param.number
+                        is Item.ItemFloat -> param.number
+                        is Item.ItemLong -> param.number
+                    }.also {
+                        put(VALUE, it)
+                    }
+                    put(TYPE, param.getType())
                 }.let {
                     this.add(it)
                 }
@@ -42,7 +51,7 @@ class ModelParser {
         return jsonObject.toJSONString()
     }
 
-    fun fromJson(json: String): ParamsModel {
+    fun fromJson(json: String, onError: (error: String) -> Unit = {}): ParamsModel {
         val result = ParamsModel()
         try {
             val mainObj = JSONValue.parseWithException(json) as JSONObject
@@ -52,14 +61,30 @@ class ModelParser {
             for (i in 0 until paramsArray.size) {
                 val paramObj = (paramsArray[i] as JSONObject)
                 val key: String = paramObj[KEY] as String
-                val value = paramObj[VALUE] as String
-                result.addItem(i, Item.ItemString(i, key, value))
+                val type = paramObj[TYPE] as? String
+                when (type) {
+                    STRING -> result.addItem(i, Item.ItemString(i, key, paramObj[VALUE] as String))
+                    BOOLEAN -> result.addItem(i, Item.ItemBoolean(i, key, paramObj[VALUE] as Boolean))
+                    INTEGER -> result.addItem(i, Item.ItemInt(i, key, paramObj[VALUE] as Int))
+                    FLOAT -> result.addItem(i, Item.ItemFloat(i, key, paramObj[VALUE] as Float))
+                    LONG -> result.addItem(i, Item.ItemLong(i, key, paramObj[VALUE] as Long))
+                    else -> result.addItem(i, Item.ItemString(i, key, paramObj[VALUE] as String))
+                }
             }
         } catch (e: ParseException) {
-            e.printStackTrace()
+            onError(e.message ?: "Unknown error")
         }
 
         return result
     }
+
+    private fun Item.getType(): String = when (this) {
+        is Item.ItemString -> STRING
+        is Item.ItemBoolean -> BOOLEAN
+        is Item.ItemInt -> INTEGER
+        is Item.ItemFloat -> FLOAT
+        is Item.ItemLong -> LONG
+    }
+
 
 }
