@@ -11,7 +11,7 @@ import utils.prepareCommand
 import java.io.BufferedReader
 import java.io.File
 
-class FireController {
+class AppViewModel {
     private val runtime by lazy { Runtime.getRuntime() }
 
     private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()

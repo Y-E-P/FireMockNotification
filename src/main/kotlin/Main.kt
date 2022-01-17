@@ -45,7 +45,7 @@ import java.util.*
 fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
-    val controller by lazy { FireController() }
+    val controller by lazy { AppViewModel() }
     controller.startDeviceSearchService()
 
     if (isOpen) {
@@ -96,7 +96,7 @@ class SplitterState {
 
 @Composable
 @Preview
-fun App(controller: FireController) {
+fun App(controller: AppViewModel) {
     val panelState = remember { PanelsState() }
     val animatedSize = if (panelState.splitterState.isResizing) {
         if (panelState.isExpanded) panelState.expandedSize else panelState.collapsedSize
@@ -129,7 +129,7 @@ fun App(controller: FireController) {
 }
 
 @Composable
-fun ContentEdit(modifier: Modifier, controller: FireController, content: @Composable () -> Unit) {
+fun ContentEdit(modifier: Modifier, controller: AppViewModel, content: @Composable () -> Unit) {
     var isEnabled by remember { mutableStateOf(false) }
     var devicesList by remember { mutableStateOf(emptyList<Device>().toMutableStateList())}
     var device by remember { mutableStateOf(Device("-1", "none", "Not selected")) }
@@ -168,7 +168,7 @@ fun ContentEdit(modifier: Modifier, controller: FireController, content: @Compos
 }
 
 @Composable
-fun ParamsEditor(modifier: Modifier = Modifier, controller: FireController) {
+fun ParamsEditor(modifier: Modifier = Modifier, controller: AppViewModel) {
     var itemsList by mutableStateOf(controller.model.params.toMutableStateList())
     var packageName by mutableStateOf(controller.model.packageName)
     var intent by mutableStateOf(controller.model.intent)
@@ -296,7 +296,7 @@ fun ParamItemView(
 @Composable
 fun ConsoleOutput(
     modifier: Modifier = Modifier,
-    controller: FireController,
+    controller: AppViewModel,
     splitterState: SplitterState,
     onResize: (delta: Dp) -> Unit
 ) {
