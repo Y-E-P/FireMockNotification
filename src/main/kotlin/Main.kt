@@ -46,6 +46,7 @@ fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
     val controller by lazy { FireController() }
+    controller.startDeviceSearchService()
 
     if (isOpen) {
         Window(title = APP_NAME,
@@ -54,6 +55,7 @@ fun main() = application {
                 LocalDensity.current
             ),
             onCloseRequest = {
+                controller.shutDown()
                 isOpen = false
             }) {
             window.minimumSize = Dimension(1024, 768)
@@ -112,7 +114,9 @@ fun App(controller: FireController) {
             ContentEdit(
                 modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
                 controller
-            )
+            ) {
+                ParamsEditor(controller = controller)
+            }
             ConsoleOutput(
                 modifier = Modifier.align(Alignment.BottomCenter).height(animatedSize),
                 controller,
@@ -125,10 +129,15 @@ fun App(controller: FireController) {
 }
 
 @Composable
-fun ContentEdit(modifier: Modifier, controller: FireController) {
+fun ContentEdit(modifier: Modifier, controller: FireController, content: @Composable () -> Unit) {
     var isEnabled by remember { mutableStateOf(false) }
+    var devicesList by remember { mutableStateOf(emptyList<Device>().toMutableStateList())}
+    var device by remember { mutableStateOf(Device("-1", "none", "Not selected")) }
     controller.addOnDataChangeListener {
         isEnabled = it.params.isNotEmpty()
+    }
+    controller.onDevicesListChanges = {
+        devicesList = it.toMutableStateList()
     }
     Column(modifier) {
         val buttonModifier = Modifier.padding(4.dp)
@@ -147,12 +156,14 @@ fun ContentEdit(modifier: Modifier, controller: FireController) {
             Spacer(Modifier.weight(1f))
             DevicesDropdown(
                 modifier = buttonModifier,
-                type = Device("-1", "none", "No devices"),
-                arrayOf(Device("-1", "none", "No devices"))
-            ) {}
+                type = device,
+                devicesList
+            ) {
+                device = it
+            }
         }
         Divider(modifier = Modifier.fillMaxWidth().wrapContentHeight(), Color.Black)
-        ParamsEditor(controller = controller)
+        content()
     }
 }
 
@@ -423,7 +434,7 @@ fun BooleanDropdown(
 fun DevicesDropdown(
     modifier: Modifier = Modifier,
     type: Device,
-    items: Array<Device>,
+    items: List<Device>,
     onDeviceChanged: (Device) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }

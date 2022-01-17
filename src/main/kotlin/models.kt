@@ -133,4 +133,12 @@ data class ParamsModel(
 }
 
 
-data class Device(val id: String, val type: String, val name: String)
+data class Device(val id: String, val model: String, val name: String)
+
+class DeviceBuilder {
+    var id: String = ""
+    var model: String = ""
+    var name: String = ""
+    fun build() = Device(id, model, name)
+
+}

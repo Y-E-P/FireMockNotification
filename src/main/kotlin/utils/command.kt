@@ -1,7 +1,10 @@
 package utils
 
+import Device
+import DeviceBuilder
 import Item
 import ParamsModel
+import java.util.*
 
 /**
  * Documentation https://developer.android.com/studio/command-line/adb#IntentSpec
@@ -31,7 +34,7 @@ fun ParamsModel.prepareCommand(): String {
     for (item in this.params) {
         command = command.plus(" ").plus(item.commandType().type).plus(" ")
         command = when (item) {
-            is Item.ItemString -> command.plus(item.key).plus(" ").plus(item.str)
+            is Item.ItemString -> command.plus(item.key).plus(" ").plus(item.str).escape()!!
             is Item.ItemBoolean -> command.plus(item.key).plus(" ").plus(item.boolean)
             is Item.ItemInt -> command.plus(item.key).plus(" ").plus(item.number)
             is Item.ItemFloat -> command.plus(item.key).plus(" ").plus(item.number)
@@ -58,3 +61,25 @@ private fun Item.commandType(): CommandLineType = when (this) {
     is Item.ItemFloat -> CommandLineType.FloatValue
     is Item.ItemLong -> CommandLineType.LongValue
 }
+
+fun parseDevicesList(line: String): Device {
+    val stringTokenizer = StringTokenizer(line)
+    val builder = DeviceBuilder()
+    while (stringTokenizer.hasMoreTokens()) {
+        if (builder.id.isEmpty()) {
+            builder.id = stringTokenizer.nextToken()
+        }
+        val item = stringTokenizer.nextToken()
+        if (item.contains("model:")) {
+            val splitedModel = item.split(":")
+            builder.model = splitedModel[1]
+        }
+        if (item.contains("device:")) {
+            val splitedModel = item.split(":")
+            builder.name = splitedModel[1]
+        }
+    }
+    return builder.build()
+}
+
+

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import repo.ModelParser
+import service.DeviceSearchService
 import utils.prepareCommand
 import java.io.BufferedReader
 import java.io.File
@@ -28,6 +29,14 @@ class FireController {
     var model: ParamsModel = ParamsModel()
     private var isConsoleOpened: Boolean = false
 
+    val deviceService = DeviceSearchService
+    var onDevicesListChanges: (List<Device>) -> Unit = {}
+    set(value){
+        field = value
+        deviceService.onDevicesListChanged = field
+    }
+
+
     fun addOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
         dataListeners.add(onDataChanged)
     }
@@ -38,6 +47,14 @@ class FireController {
 
     fun run() {
         startCommand(model.prepareCommand())
+    }
+
+    fun startDeviceSearchService() {
+        deviceService.startMonitoringDevices()
+    }
+
+    fun shutDown() {
+        deviceService.shutDown()
     }
 
     private fun startCommand(command: String) {
