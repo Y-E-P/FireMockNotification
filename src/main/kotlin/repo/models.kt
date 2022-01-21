@@ -25,6 +25,7 @@ fun Item.type(): DataType =
         is Item.ItemFloat -> DataType.FLOAT
         is Item.ItemInt -> DataType.INTEGER
         is Item.ItemLong -> DataType.LONG
+        else -> DataType.STRING
     }
 
 fun Item.dataAsString(): String =
@@ -34,6 +35,7 @@ fun Item.dataAsString(): String =
         is Item.ItemFloat -> this.number.toString()
         is Item.ItemInt -> this.number.toString()
         is Item.ItemLong -> this.number.toString()
+        else -> this.toString()
     }
 
 enum class DataType {
@@ -140,5 +142,4 @@ class DeviceBuilder {
     var model: String = ""
     var name: String = ""
     fun build() = Device(id, model, name)
-
 }
