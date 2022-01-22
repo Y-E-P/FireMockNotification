@@ -1,4 +1,4 @@
-package ui
+package ui.base
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*

@@ -69,7 +69,7 @@ class ConsoleModel {
 
 }
 
-class ConsoleItem(val id: String, val data: String, val type: Type, val time: String) {
+public class ConsoleItem(val id: String, val data: String, val type: Type, val time: String) {
     enum class Type {
         ERROR, OUTPUT, INPUT
     }

@@ -1,4 +1,4 @@
-package ui
+package ui.base
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Button
@@ -16,10 +16,10 @@ import resources.ResString
 fun <T> BaseDropdown(
     modifier: Modifier = Modifier,
     type: T,
-    items: Array<T>,
+    items: List<T>,
     onItemSelected: (T) -> Unit,
-    title: @Composable (T) -> Unit,
-    content: @Composable (T) -> Unit,
+    title: @Composable (T) -> Unit = {},
+    content: @Composable (T) -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
     var data by remember { mutableStateOf(type) }

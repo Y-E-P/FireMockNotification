@@ -1,8 +1,6 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import repo.ModelParser
@@ -13,6 +11,7 @@ import java.io.File
 
 class AppViewModel {
     private val runtime by lazy { Runtime.getRuntime() }
+    val dispatcher = CoroutineScope(Dispatchers.Swing)
 
     private val dataListeners: ArrayList<(ParamsModel) -> Unit> = ArrayList()
     private var currentFile: File? = null
@@ -26,15 +25,34 @@ class AppViewModel {
     var onSaveAsCallback: (String) -> Unit = {}
     private var idCounter: Int = 2
 
+    private val _state = MutableStateFlow<AppState>(AppState.Initial)
+    val state: StateFlow<AppState> = _state
+
+    sealed class AppState {
+        object Initial : AppState()
+        data class DevicesFound(val devicesList: List<Device>) : AppState()
+        data class Console(val isOpen: Boolean, val consoleData: List<ConsoleItem>) : AppState()
+    }
+
+    sealed class Message {
+        data class PackageUpdate(val packageName: String) : Message()
+        data class IntentUpdate(val intentName: String) : Message()
+        data class KeyUpdate(val index: Int, val key: String) : Message()
+        data class ValueUpdate(val index: Int, val value: String) : Message()
+        data class TypeUpdate(val index: Int, val type: DataType) : Message()
+        data class Remove(val index: Int) : Message()
+        object AddItem : Message()
+    }
+
     var model: ParamsModel = ParamsModel()
     private var isConsoleOpened: Boolean = false
 
     val deviceService = DeviceSearchService
     var onDevicesListChanges: (List<Device>) -> Unit = {}
-    set(value){
-        field = value
-        deviceService.onDevicesListChanged = field
-    }
+        set(value) {
+            field = value
+            deviceService.onDevicesListChanged = field
+        }
 
 
     fun addOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
@@ -85,39 +103,22 @@ class AppViewModel {
         isConsoleOpened = !isConsoleOpened
     }
 
-    fun addNewItem() {
-        model.addItem(idCounter++)
-        notifyChanges()
-    }
-
-    fun updateKey(index: Int, key: String) {
-        model.updateKey(index, key)
-        notifyChanges()
-    }
-
-    fun updateValue(index: Int, value: Any) {
-        model.updateValue(index, value)
-        notifyChanges()
-    }
-
-    fun updateType(index: Int, value: DataType) {
-        model.updateType(index, value)
-        notifyChanges()
-    }
-
-    fun removeItem(index: Int) {
-        model.removeItem(index).run {
-            notifyChanges()
+    private fun emitEvent(state: AppState) {
+        dispatcher.launch {
+            _state.emit(state)
         }
     }
 
-    fun editIntent(intent: String) {
-        model.intent = intent
-        notifyChanges()
-    }
-
-    fun editAppPackage(packageName: String) {
-        model.packageName = packageName
+    fun sendMessage(msg: Message) {
+        when (msg) {
+            is Message.IntentUpdate -> model.intent = msg.intentName
+            is Message.PackageUpdate -> model.packageName = msg.packageName
+            is Message.KeyUpdate -> model.updateKey(msg.index, msg.key)
+            is Message.Remove -> model.removeItem(msg.index)
+            is Message.TypeUpdate -> model.updateType(msg.index, msg.type)
+            is Message.ValueUpdate -> model.updateValue(msg.index, msg.value)
+            is Message.AddItem -> model.addItem(idCounter++)
+        }
         notifyChanges()
     }
 
