@@ -24,13 +24,14 @@ class AppViewModel {
     var onConsoleOpen: (Boolean) -> Unit = {}
     var onSaveAsCallback: (String) -> Unit = {}
     private var idCounter: Int = 2
+    var selectedDevice: Device = Device("-1", "none", "Not selected")
 
     private val _state = MutableStateFlow<AppState>(AppState.Initial)
     val state: StateFlow<AppState> = _state
 
     sealed class AppState {
         object Initial : AppState()
-        data class DevicesFound(val devicesList: List<Device>) : AppState()
+        data class DevicesFound(val selected: Device, val devicesList: List<Device>) : AppState()
         data class Console(val isOpen: Boolean, val consoleData: List<ConsoleItem>) : AppState()
     }
 
@@ -46,14 +47,7 @@ class AppViewModel {
 
     var model: ParamsModel = ParamsModel()
     private var isConsoleOpened: Boolean = false
-
-    val deviceService = DeviceSearchService
-    var onDevicesListChanges: (List<Device>) -> Unit = {}
-        set(value) {
-            field = value
-            deviceService.onDevicesListChanged = field
-        }
-
+    private val deviceService = DeviceSearchService
 
     fun addOnDataChangeListener(onDataChanged: (ParamsModel) -> Unit) {
         dataListeners.add(onDataChanged)
@@ -69,6 +63,9 @@ class AppViewModel {
 
     fun startDeviceSearchService() {
         deviceService.startMonitoringDevices()
+        deviceService.onDevicesListChanged = {
+            emitEvent(AppState.DevicesFound(selectedDevice, it))
+        }
     }
 
     fun shutDown() {

@@ -62,7 +62,6 @@ object DeviceSearchService {
                     is AdbCommunicate.ConsoleOutput.Error -> {}
                 }
             }
-
         }
     }
 }
