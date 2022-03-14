@@ -1,7 +1,5 @@
 package repo
 
-import Item
-import ParamsModel
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
@@ -61,8 +59,7 @@ class ModelParser {
             for (i in 0 until paramsArray.size) {
                 val paramObj = (paramsArray[i] as JSONObject)
                 val key: String = paramObj[KEY] as String
-                val type = paramObj[TYPE] as? String
-                when (type) {
+                when (paramObj[TYPE] as? String) {
                     STRING -> result.addItem(i, Item.ItemString(i, key, paramObj[VALUE] as String))
                     BOOLEAN -> result.addItem(i, Item.ItemBoolean(i, key, paramObj[VALUE] as Boolean))
                     INTEGER -> result.addItem(i, Item.ItemInt(i, key, paramObj[VALUE] as Int))

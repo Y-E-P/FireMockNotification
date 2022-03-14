@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.compose") version "1.0.1"
 }
 
-group = "com.poud"
+group = "com.poudanien"
 version = "1.0.1"
 
 repositories {
@@ -20,11 +20,11 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    testImplementation("junit:junit:4.13")
+    testImplementation("junit:junit:4.13.2")
     implementation("com.googlecode.json-simple:json-simple:1.1.1")
 }
 
-tasks.withType<KotlinCompile>() {
+tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
@@ -33,8 +33,14 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "FireMockNotification"
+            packageName = "QAAdbHelper"
             packageVersion = "1.0.0"
+
+            windows {
+                menu = true
+                // see https://wixtoolset.org/documentation/manual/v3/howtos/general/generate_guids.html
+                // upgradeUuid = ""
+            }
         }
     }
 }

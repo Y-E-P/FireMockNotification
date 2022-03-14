@@ -1,8 +1,6 @@
 package ui.broadcast
 
 import AppViewModel
-import DataType
-import Item
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -13,37 +11,79 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dataAsString
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import repo.DataType
+import repo.Item
+import repo.dataAsString
+import repo.type
 import resources.ResString
-import type
 import ui.base.BaseDropdown
+import ui.base.LAUNCH_LISTEN_FOR_EFFECTS
 import java.util.*
 
 @Composable
-fun ParamsEditor(modifier: Modifier = Modifier, controller: AppViewModel) {
-    var itemsList by mutableStateOf(controller.model.params.toMutableStateList())
-    var packageName by mutableStateOf(controller.model.packageName)
-    var intent by mutableStateOf(controller.model.intent)
-    controller.addOnDataChangeListener {
-        itemsList = it.params.toMutableStateList()
-        intent = it.packageName
-        packageName = it.intent
+fun ParamsEditorScreen(modifier: Modifier = Modifier, controller: AppViewModel, viewModel: EditorViewModel) {
+    val state by remember { viewModel.viewState }
+    ParamsEditor(
+        modifier,
+        state = state,
+        effectFlow = viewModel.effect,
+        onEventSent = { event -> viewModel.setEvent(event) },
+        onOutsideCommand = {
+            if (it is EditorContract.Effect.RunCommand) {
+                controller.run(it.cmd)
+            }
+        }
+    )
+}
+
+@Composable
+private fun ParamsEditor(
+    modifier: Modifier = Modifier,
+    state: EditorContract.State,
+    effectFlow: Flow<EditorContract.Effect>?,
+    onEventSent: (event: EditorContract.Event) -> Unit,
+    onOutsideCommand: (event: EditorContract.Effect) -> Unit
+) {
+    LaunchedEffect(LAUNCH_LISTEN_FOR_EFFECTS) {
+        effectFlow?.onEach { itEffect ->
+            when (itEffect) {
+                is EditorContract.Effect.RunCommand -> onOutsideCommand(itEffect)
+            }
+        }?.collect()
     }
     Column(modifier.fillMaxSize()) {
-        DefaultParams(Modifier.padding(6.dp), packageName, intent) { message ->
-            controller.sendMessage(message)
+        val buttonModifier = Modifier.padding(4.dp)
+        Row {
+            Button(modifier = buttonModifier, onClick = {
+                onEventSent(EditorContract.Event.Run)
+            }) {
+                Text(text = ResString.run)
+            }
+            Button(
+                modifier = buttonModifier, onClick = {
+                    onEventSent(EditorContract.Event.Clear)
+                }
+            ) {
+                Text(text = ResString.clear)
+            }
+        }
+        DefaultParams(Modifier.padding(6.dp), state.packageName, state.intentName) { message ->
+            onEventSent(message)
         }
         Row(modifier = Modifier.wrapContentSize()) {
             Button(modifier = Modifier.padding(4.dp), onClick = {
-                controller.sendMessage(AppViewModel.Message.AddItem)
+                onEventSent(EditorContract.Event.AddItem)
             }) {
                 Text(ResString.addParam)
             }
         }
         LazyColumn {
-            itemsIndexed(itemsList, key = { _, item -> item.id }) { index, item ->
+            itemsIndexed(state.itemsList, key = { _, item -> item.id }) { index, item ->
                 ParamItemView(index = index, item = item, onMessage = {
-                    controller.sendMessage(it)
+                    onEventSent(it)
                 })
             }
         }
@@ -55,15 +95,15 @@ fun DefaultParams(
     modifier: Modifier = Modifier,
     packageName: String,
     intent: String,
-    onChanged: (AppViewModel.Message) -> Unit
+    onChanged: (EditorContract.Event) -> Unit
 ) {
     Row(modifier = modifier.wrapContentSize()) {
         CombinedText(label = ResString.intentLabel, text = intent, onTextReady = {
-            onChanged(AppViewModel.Message.IntentUpdate(it))
+            onChanged(EditorContract.Event.IntentUpdate(it))
         })
         Spacer(Modifier.width(6.dp))
         CombinedText(label = ResString.packageLabel, text = packageName, onTextReady = {
-            onChanged(AppViewModel.Message.PackageUpdate(it))
+            onChanged(EditorContract.Event.PackageUpdate(it))
         })
     }
 }
@@ -73,17 +113,17 @@ fun ParamItemView(
     modifier: Modifier = Modifier,
     index: Int,
     item: Item,
-    onMessage: (AppViewModel.Message) -> Unit
+    onMessage: (EditorContract.Event) -> Unit
 ) {
     val dataType = remember { mutableStateOf(item.type()) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
         CombinedText(modifier = Modifier.weight(0.3f), label = ResString.keyLabel, text = item.key, onTextReady = {
-            onMessage(AppViewModel.Message.KeyUpdate(index, it))
+            onMessage(EditorContract.Event.KeyUpdate(index, it))
         })
         Spacer(Modifier.width(6.dp))
         if (dataType.value == DataType.BOOLEAN) {
             BaseDropdown(modifier = Modifier.align(Alignment.CenterVertically), type = false, listOf(true, false), {
-                onMessage(AppViewModel.Message.ValueUpdate(index, it.toString()))
+                onMessage(EditorContract.Event.ValueUpdate(index, it.toString()))
             }, title = {
                 Text(text = it.toString())
             }) {
@@ -95,7 +135,7 @@ fun ParamItemView(
                 label = ResString.valueLabel,
                 text = item.dataAsString(),
                 onTextReady = {
-                    onMessage(AppViewModel.Message.ValueUpdate(index, it))
+                    onMessage(EditorContract.Event.ValueUpdate(index, it))
                 })
         }
         Spacer(Modifier.width(6.dp))
@@ -108,14 +148,14 @@ fun ParamItemView(
                 Text(text = it.name.uppercase(Locale.getDefault()))
             },
             onItemSelected = {
-                onMessage(AppViewModel.Message.TypeUpdate(index, it))
+                onMessage(EditorContract.Event.TypeUpdate(index, it))
                 dataType.value = it
             }) {
             Text(text = it.name.uppercase(Locale.getDefault()))
         }
         IconButton(
             modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-            onClick = { onMessage(AppViewModel.Message.Remove(index)) }) {
+            onClick = { onMessage(EditorContract.Event.Remove(index)) }) {
             Icon(Icons.Default.Delete, contentDescription = null)
         }
     }

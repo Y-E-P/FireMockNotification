@@ -1,6 +1,6 @@
 package service
 
-import Device
+import repo.Device
 import utils.AdbCommunicate
 import utils.parseDevicesList
 import java.util.concurrent.ExecutorService

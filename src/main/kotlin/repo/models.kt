@@ -1,3 +1,5 @@
+package repo
+
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,7 +27,6 @@ fun Item.type(): DataType =
         is Item.ItemFloat -> DataType.FLOAT
         is Item.ItemInt -> DataType.INTEGER
         is Item.ItemLong -> DataType.LONG
-        else -> DataType.STRING
     }
 
 fun Item.dataAsString(): String =
@@ -35,44 +36,10 @@ fun Item.dataAsString(): String =
         is Item.ItemFloat -> this.number.toString()
         is Item.ItemInt -> this.number.toString()
         is Item.ItemLong -> this.number.toString()
-        else -> this.toString()
     }
 
 enum class DataType {
-    STRING, INTEGER, FLOAT, BOOLEAN, LONG/*, URI*/
-}
-
-class ConsoleModel {
-    private val consoleData: MutableList<ConsoleItem> = mutableListOf()
-    var onConsoleDataChanged: (List<ConsoleItem>) -> Unit = {}
-
-    fun emitError(data: String) {
-        emit(data, ConsoleItem.Type.ERROR)
-    }
-
-    fun emitOutput(data: String) {
-        emit(data, ConsoleItem.Type.OUTPUT)
-    }
-
-    fun emitInput(data: String) {
-        emit(data, ConsoleItem.Type.INPUT)
-    }
-
-    private fun emit(data: String, type: ConsoleItem.Type) {
-        val id = UUID.randomUUID().toString()
-        val time = SimpleDateFormat("yyyy/MM/dd HH:mm").format(Date())
-        ConsoleItem(id, data, type, time).let {
-            consoleData.add(it)
-            onConsoleDataChanged(consoleData)
-        }
-    }
-
-}
-
-public class ConsoleItem(val id: String, val data: String, val type: Type, val time: String) {
-    enum class Type {
-        ERROR, OUTPUT, INPUT
-    }
+    STRING, INTEGER, FLOAT, BOOLEAN, LONG
 }
 
 sealed class Reaction<out T> {
@@ -85,10 +52,11 @@ sealed class Reaction<out T> {
 data class ParamsModel(
     var intent: String = "",
     var packageName: String = "",
-    val params: LinkedList<Item> = LinkedList()
+    val params: LinkedList<Item> = LinkedList(),
+    private var idCounter: Int = 0
 ) {
 
-    fun addItem(id: Int, item: Item = Item.ItemString(id, "", "")) {
+    fun addItem(id: Int = ++idCounter, item: Item = Item.ItemString(id, "", "")) {
         params.add(item)
     }
 
@@ -101,13 +69,16 @@ data class ParamsModel(
     }
 
     fun updateValue(index: Int, value: Any) {
-        when (value) {
-            is String -> (params[index] as? Item.ItemString)?.str = value
-            is Int -> (params[index] as? Item.ItemInt)?.number = value
-            is Boolean -> (params[index] as? Item.ItemBoolean)?.boolean = value
-            is Float -> (params[index] as? Item.ItemFloat)?.number = value
-            is Long -> (params[index] as? Item.ItemLong)?.number = value
-        }
+        params[index] = when (value) {
+            is String -> (params[index] as? Item.ItemString)?.copy(str = value)
+            is Int -> (params[index] as? Item.ItemInt)?.copy(number = value)
+            is Boolean -> (params[index] as? Item.ItemBoolean)?.copy(boolean = value)
+            is Float -> (params[index] as? Item.ItemFloat)?.copy(number = value)
+            is Long -> (params[index] as? Item.ItemLong)?.copy(number = value)
+            else -> {
+                (params[index] as Item.ItemString).copy()
+            }
+        }!!
 
     }
 

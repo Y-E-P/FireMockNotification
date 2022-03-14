@@ -1,7 +1,5 @@
 package ui.console
 
-import AppViewModel
-import ConsoleItem
 import SplitterState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +8,7 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -25,21 +24,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import resources.ResString
-import androidx.compose.foundation.lazy.items
 import utils.cursorForHorizontalResize
 
 @Composable
 fun ConsoleOutput(
     modifier: Modifier = Modifier,
-    controller: AppViewModel,
+    itemsList: List<ConsoleItem>,
     splitterState: SplitterState,
+    onOpenConsole: () -> Unit,
     onResize: (delta: Dp) -> Unit
 ) {
     val density = LocalDensity.current
-    var itemsList by mutableStateOf(emptyList<ConsoleItem>().toMutableStateList())
-    controller.onConsoleOutput = {
-        itemsList = it.toMutableStateList()
-    }
     Column(modifier.fillMaxWidth()) {
         Divider(modifier = Modifier.fillMaxWidth().height(2.dp).run {
             return@run this.draggable(
@@ -60,7 +55,7 @@ fun ConsoleOutput(
             Box(
                 modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically)
                     .clickable(role = Role.Button) {
-                        controller.openConsole()
+                        onOpenConsole()
                     }) {
                 Icon(Icons.Default.Close, contentDescription = null)
             }

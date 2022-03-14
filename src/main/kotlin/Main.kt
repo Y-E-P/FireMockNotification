@@ -4,8 +4,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -21,7 +19,8 @@ import resources.ResString
 import resources.ResString.APP_NAME
 import ui.base.AboutDialog
 import ui.base.BaseDropdown
-import ui.broadcast.ParamsEditor
+import ui.broadcast.EditorViewModel
+import ui.broadcast.ParamsEditorScreen
 import ui.console.ConsoleOutput
 import utils.openFile
 import utils.saveFile
@@ -33,8 +32,9 @@ import java.util.*
 fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
-    val controller by lazy { AppViewModel() }
-    controller.startDeviceSearchService()
+    val viewModelApp by lazy { AppViewModel() }
+    val viewModel by lazy { EditorViewModel() }
+    viewModelApp.startDeviceSearchService()
 
     if (isOpen) {
         Window(title = APP_NAME,
@@ -43,24 +43,24 @@ fun main() = application {
                 LocalDensity.current
             ),
             onCloseRequest = {
-                controller.shutDown()
+                viewModelApp.shutDown()
                 isOpen = false
             }) {
             window.minimumSize = Dimension(1024, 768)
-            controller.onSaveAsCallback = {
+            viewModelApp.onSaveAsCallback = {
                 window.saveFile(it)
             }
             FireMenu {
                 when (it) {
                     MenuItem.ABOUT -> openDialog.value = true
-                    MenuItem.SAVE -> controller.saveScheme()
-                    MenuItem.SAVE_AS -> controller.saveAsScheme()
+                    MenuItem.SAVE -> viewModelApp.setEvent(AppContract.Event.Save(""))
+                    MenuItem.SAVE_AS -> viewModelApp.setEvent(AppContract.Event.SaveAs(""))
                     MenuItem.OPEN -> {
-                        window.openFile()?.let { file -> controller.loadScheme(file) }
+                        window.openFile()?.let { file -> viewModelApp.loadScheme(file) }
                     }
                 }
             }
-            App(controller)
+            App(viewModelApp, viewModel)
             if (openDialog.value) {
                 AboutDialog {
                     openDialog.value = false
@@ -74,7 +74,6 @@ private class PanelsState {
     val collapsedSize = 0.dp
     var expandedSize by mutableStateOf(300.dp)
     val expandedSizeMin = 100.dp
-    var isExpanded by mutableStateOf(true)
     var splitterState = SplitterState()
 }
 
@@ -84,76 +83,65 @@ class SplitterState {
 
 @Composable
 @Preview
-fun App(controller: AppViewModel) {
+fun App(appViewModel: AppViewModel, editorViewModel: EditorViewModel) {
+    val state by remember { appViewModel.viewState }
     val panelState = remember { PanelsState() }
     val animatedSize = if (panelState.splitterState.isResizing) {
-        if (panelState.isExpanded) panelState.expandedSize else panelState.collapsedSize
+        if (state.consoleOpened) panelState.expandedSize else panelState.collapsedSize
     } else {
         animateDpAsState(
-            if (panelState.isExpanded) panelState.expandedSize else panelState.collapsedSize,
+            if (state.consoleOpened) panelState.expandedSize else panelState.collapsedSize,
             SpringSpec(stiffness = Spring.StiffnessLow)
         ).value
-    }
-    controller.onConsoleOpen = {
-        panelState.isExpanded = it
     }
     MaterialTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             ContentEdit(
                 modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
-                controller
+                appViewModel
             ) {
-                ParamsEditor(controller = controller)
+                ParamsEditorScreen(controller = appViewModel, viewModel = editorViewModel)
             }
             ConsoleOutput(
                 modifier = Modifier.align(Alignment.BottomCenter).height(animatedSize),
-                controller,
-                splitterState = panelState.splitterState
-            ) { delta ->
-                panelState.expandedSize = (panelState.expandedSize - delta).coerceAtLeast(panelState.expandedSizeMin)
-            }
+                splitterState = panelState.splitterState,
+                itemsList = state.consoleOut,
+                onOpenConsole = {
+                    appViewModel.setEvent(AppContract.Event.CloseConsole)
+                },
+                onResize = { delta ->
+                    panelState.expandedSize =
+                        (panelState.expandedSize - delta).coerceAtLeast(panelState.expandedSizeMin)
+                })
         }
     }
 }
 
 @Composable
-fun ContentEdit(modifier: Modifier, controller: AppViewModel, content: @Composable () -> Unit) {
-    var isEnabled by remember { mutableStateOf(false) }
-    var devicesList by remember { mutableStateOf(emptyList<Device>().toMutableStateList()) }
-    var device by remember { mutableStateOf(controller.selectedDevice) }
-    controller.addOnDataChangeListener {
-        isEnabled = it.params.isNotEmpty()
-    }
-    val state = controller.state.collectAsState()
-    when (val item = state.value) {
-        is AppViewModel.AppState.Console -> {}
-        is AppViewModel.AppState.DevicesFound -> devicesList = item.devicesList.toMutableStateList()
-        AppViewModel.AppState.Initial -> {
-        }
-    }
+fun ContentEdit(modifier: Modifier, viewModel: AppViewModel, content: @Composable () -> Unit) {
+    val state by remember { viewModel.viewState }
 
     Column(modifier) {
         val buttonModifier = Modifier.padding(4.dp)
         Row(modifier = Modifier.wrapContentSize()) {
-            Button(modifier = buttonModifier, enabled = isEnabled, onClick = { controller.run() }) {
-                Text(text = ResString.run)
-            }
             Button(
-                modifier = buttonModifier, enabled = isEnabled, onClick = { controller.clear() }) {
-                Text(text = ResString.clear)
-            }
-            Button(
-                modifier = buttonModifier, onClick = { controller.openConsole() }) {
+                modifier = buttonModifier, onClick = {
+                    if (state.consoleOpened) {
+                        viewModel.setEvent(AppContract.Event.CloseConsole)
+                    } else {
+                        viewModel.setEvent(AppContract.Event.OpenConsole)
+                    }
+                }) {
                 Text(text = ResString.consoleOutput)
             }
             Spacer(Modifier.weight(1f))
             BaseDropdown(
                 modifier = buttonModifier,
-                type = device,
-                items = devicesList, title = {
+                type = state.selected,
+                items = state.devicesList, title = {
                     Text(text = it.name)
                 }, onItemSelected = {
-                    device = it
+                    viewModel.setEvent(AppContract.Event.SelectDevice(it))
                 }) {
                 Text(it.name.uppercase(Locale.getDefault()), fontSize = 12.sp)
             }

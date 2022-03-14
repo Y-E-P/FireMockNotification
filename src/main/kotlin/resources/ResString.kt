@@ -1,12 +1,12 @@
 package resources
 
 object ResString {
-    const val APP_NAME: String = "NotifyMock"
+    const val APP_NAME: String = "QAAdbHelper"
     const val saveScheme: String = "Save scheme"
     const val saveAsScheme: String = "Save as scheme"
     const val falseString: String = "false"
     const val trueString: String = "true"
-    const val changeType: String = "Change type"
+    const val changeType: String = "Change repo.type"
     const val console: String = "Console output"
     const val clear: String = "Clear"
     const val run: String = "Run"

@@ -1,6 +1,7 @@
 import org.junit.Before
 import org.junit.Test
 import repo.ModelParser
+import repo.ParamsModel
 
 class ParserTest {
 

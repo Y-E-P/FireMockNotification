@@ -1,6 +1,9 @@
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import repo.Device
+import repo.Item
+import repo.ParamsModel
 import utils.CommandLineType
 import utils.parseDevicesList
 import utils.prepareCommand
