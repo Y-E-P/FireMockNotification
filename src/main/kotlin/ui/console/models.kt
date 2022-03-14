@@ -2,6 +2,7 @@ package ui.console
 
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class ConsoleModel {
     private val consoleData: MutableList<ConsoleItem> = mutableListOf()
@@ -24,7 +25,7 @@ class ConsoleModel {
         val time = SimpleDateFormat("yyyy/MM/dd HH:mm").format(Date())
         ConsoleItem(id, data, type, time).let {
             consoleData.add(it)
-            onConsoleDataChanged(consoleData)
+            onConsoleDataChanged(ArrayList(consoleData))
         }
     }
 }
