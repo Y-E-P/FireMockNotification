@@ -33,13 +33,7 @@ fun ParamsModel.prepareCommand(): String {
         .plus(this.intent)
     for (item in this.params) {
         command = command.plus(" ").plus(item.commandType().type).plus(" ")
-        command = when (item) {
-            is Item.ItemString -> command.plus(item.key).plus(" ").plus(item.str).escape()!!
-            is Item.ItemBoolean -> command.plus(item.key).plus(" ").plus(item.boolean)
-            is Item.ItemInt -> command.plus(item.key).plus(" ").plus(item.number)
-            is Item.ItemFloat -> command.plus(item.key).plus(" ").plus(item.number)
-            is Item.ItemLong -> command.plus(item.key).plus(" ").plus(item.number)
-        }
+        command = command.plus(item.key).plus(" ").plus(item.data.toString()).escape()!!
     }
     return command
 }
@@ -54,12 +48,12 @@ enum class CommandLineType(val type: String) {
     Receiver("-n"),
 }
 
-private fun Item.commandType(): CommandLineType = when (this) {
-    is Item.ItemString -> CommandLineType.StringValue
-    is Item.ItemBoolean -> CommandLineType.BooleanValue
-    is Item.ItemInt -> CommandLineType.IntegerValue
-    is Item.ItemFloat -> CommandLineType.FloatValue
-    is Item.ItemLong -> CommandLineType.LongValue
+private fun Item.commandType(): CommandLineType = when (this.type) {
+    Item.DataType.STRING -> CommandLineType.StringValue
+    Item.DataType.BOOLEAN -> CommandLineType.BooleanValue
+    Item.DataType.INTEGER -> CommandLineType.IntegerValue
+    Item.DataType.FLOAT -> CommandLineType.FloatValue
+    Item.DataType.LONG -> CommandLineType.LongValue
 }
 
 fun parseDevicesList(line: String): Device {

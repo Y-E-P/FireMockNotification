@@ -14,10 +14,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
-import repo.DataType
 import repo.Item
-import repo.dataAsString
-import repo.type
+import repo.Item.DataType.BOOLEAN
+import repo.Item.DataType.values
 import resources.ResString
 import ui.base.BaseDropdown
 import ui.base.LAUNCH_LISTEN_FOR_EFFECTS
@@ -115,13 +114,13 @@ fun ParamItemView(
     item: Item,
     onMessage: (EditorContract.Event) -> Unit
 ) {
-    val dataType = remember { mutableStateOf(item.type()) }
+    val dataType = remember { mutableStateOf(item.type) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
         CombinedText(modifier = Modifier.weight(0.3f), label = ResString.keyLabel, text = item.key, onTextReady = {
             onMessage(EditorContract.Event.KeyUpdate(index, it))
         })
         Spacer(Modifier.width(6.dp))
-        if (dataType.value == DataType.BOOLEAN) {
+        if (dataType.value == BOOLEAN) {
             BaseDropdown(modifier = Modifier.align(Alignment.CenterVertically), type = false, listOf(true, false), {
                 onMessage(EditorContract.Event.ValueUpdate(index, it.toString()))
             }, title = {
@@ -133,7 +132,7 @@ fun ParamItemView(
             CombinedText(
                 modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f),
                 label = ResString.valueLabel,
-                text = item.dataAsString(),
+                text = item.data.toString(),
                 onTextReady = {
                     onMessage(EditorContract.Event.ValueUpdate(index, it))
                 })
@@ -142,8 +141,8 @@ fun ParamItemView(
 
         BaseDropdown(
             modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-            type = item.type(),
-            DataType.values().toList(),
+            type = item.type,
+            values().toList(),
             title = {
                 Text(text = it.name.uppercase(Locale.getDefault()))
             },

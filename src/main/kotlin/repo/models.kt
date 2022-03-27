@@ -1,45 +1,13 @@
 package repo
 
-import java.text.SimpleDateFormat
 import java.util.*
 
 
-sealed class Item(open val id: Int, open var key: String) {
-    data class ItemString(
-        override val id: Int,
-        override var key: String,
-        var str: String
-    ) : Item(id, key)
+data class Item(val id: Int, val key: String, val type: DataType, val data: Any) {
 
-    data class ItemBoolean(
-        override val id: Int, override var key: String, var boolean: Boolean
-    ) : Item(id, key)
-
-    data class ItemFloat(override val id: Int, override var key: String, var number: Float) : Item(id, key)
-    data class ItemInt(override val id: Int, override var key: String, var number: Int) : Item(id, key)
-    data class ItemLong(override val id: Int, override var key: String, var number: Long) : Item(id, key)
-}
-
-fun Item.type(): DataType =
-    when (this) {
-        is Item.ItemString -> DataType.STRING
-        is Item.ItemBoolean -> DataType.BOOLEAN
-        is Item.ItemFloat -> DataType.FLOAT
-        is Item.ItemInt -> DataType.INTEGER
-        is Item.ItemLong -> DataType.LONG
+    enum class DataType {
+        STRING, INTEGER, FLOAT, BOOLEAN, LONG
     }
-
-fun Item.dataAsString(): String =
-    when (this) {
-        is Item.ItemString -> str
-        is Item.ItemBoolean -> this.boolean.toString()
-        is Item.ItemFloat -> this.number.toString()
-        is Item.ItemInt -> this.number.toString()
-        is Item.ItemLong -> this.number.toString()
-    }
-
-enum class DataType {
-    STRING, INTEGER, FLOAT, BOOLEAN, LONG
 }
 
 sealed class Reaction<out T> {
@@ -56,7 +24,7 @@ data class ParamsModel(
     private var idCounter: Int = 0
 ) {
 
-    fun addItem(id: Int = ++idCounter, item: Item = Item.ItemString(id, "", "")) {
+    fun addItem(id: Int = ++idCounter, item: Item = Item(id, "", Item.DataType.STRING, "")) {
         params.add(item)
     }
 
@@ -65,32 +33,22 @@ data class ParamsModel(
     }
 
     fun updateKey(index: Int, key: String) {
-        params[index].key = key
+        params[index] = params[index].copy(key = key)
     }
 
     fun updateValue(index: Int, value: Any) {
-        params[index] = when (value) {
-            is String -> (params[index] as? Item.ItemString)?.copy(str = value)
-            is Int -> (params[index] as? Item.ItemInt)?.copy(number = value)
-            is Boolean -> (params[index] as? Item.ItemBoolean)?.copy(boolean = value)
-            is Float -> (params[index] as? Item.ItemFloat)?.copy(number = value)
-            is Long -> (params[index] as? Item.ItemLong)?.copy(number = value)
-            else -> {
-                (params[index] as Item.ItemString).copy()
-            }
-        }!!
-
+        params[index] = params[index].copy(data = value)
     }
 
-    fun updateType(index: Int, value: DataType) {
+    fun updateType(index: Int, value: Item.DataType) {
         val id = params[index].id
         val key = params[index].key
         params[index] = when (value) {
-            DataType.LONG -> Item.ItemLong(id, key, 0)
-            DataType.STRING -> Item.ItemString(id, key, "")
-            DataType.INTEGER -> Item.ItemInt(id, key, 0)
-            DataType.FLOAT -> Item.ItemFloat(id, key, 0.0f)
-            DataType.BOOLEAN -> Item.ItemBoolean(id, key, false)
+            Item.DataType.LONG -> Item(id, key, value, 0L)
+            Item.DataType.STRING -> Item(id, key, value, "")
+            Item.DataType.INTEGER -> Item(id, key, value, 0)
+            Item.DataType.FLOAT -> Item(id, key, value, 0.0f)
+            Item.DataType.BOOLEAN -> Item(id, key, value, false)
         }
     }
 

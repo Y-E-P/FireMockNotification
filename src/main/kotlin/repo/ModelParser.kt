@@ -30,20 +30,11 @@ class ModelParser {
             for (param in paramsModel.params) {
                 JSONObject().apply {
                     put(KEY, param.key)
-                    when (param) {
-                        is Item.ItemString -> param.str
-                        is Item.ItemBoolean -> param.boolean
-                        is Item.ItemInt -> param.number
-                        is Item.ItemFloat -> param.number
-                        is Item.ItemLong -> param.number
-                    }.also {
-                        put(VALUE, it)
-                    }
+                    put(VALUE, param.data)
                     put(TYPE, param.getType())
                 }.let {
                     this.add(it)
                 }
-
             }
         }
         return jsonObject.toJSONString()
@@ -59,14 +50,8 @@ class ModelParser {
             for (i in 0 until paramsArray.size) {
                 val paramObj = (paramsArray[i] as JSONObject)
                 val key: String = paramObj[KEY] as String
-                when (paramObj[TYPE] as? String) {
-                    STRING -> result.addItem(i, Item.ItemString(i, key, paramObj[VALUE] as String))
-                    BOOLEAN -> result.addItem(i, Item.ItemBoolean(i, key, paramObj[VALUE] as Boolean))
-                    INTEGER -> result.addItem(i, Item.ItemInt(i, key, paramObj[VALUE] as Int))
-                    FLOAT -> result.addItem(i, Item.ItemFloat(i, key, paramObj[VALUE] as Float))
-                    LONG -> result.addItem(i, Item.ItemLong(i, key, paramObj[VALUE] as Long))
-                    else -> result.addItem(i, Item.ItemString(i, key, paramObj[VALUE] as String))
-                }
+                val type = paramObj[TYPE] as String
+                result.addItem(i, Item(i, key, type.getTypeBy(), type.getValueByTypeBy(paramObj)))
             }
         } catch (e: ParseException) {
             onError(e.message ?: "Unknown error")
@@ -75,12 +60,28 @@ class ModelParser {
         return result
     }
 
-    private fun Item.getType(): String = when (this) {
-        is Item.ItemString -> STRING
-        is Item.ItemBoolean -> BOOLEAN
-        is Item.ItemInt -> INTEGER
-        is Item.ItemFloat -> FLOAT
-        is Item.ItemLong -> LONG
+    private fun Item.getType(): String = when (this.type) {
+        Item.DataType.STRING -> STRING
+        Item.DataType.BOOLEAN -> BOOLEAN
+        Item.DataType.INTEGER -> INTEGER
+        Item.DataType.FLOAT -> FLOAT
+        Item.DataType.LONG -> LONG
+    }
+
+    private fun String.getTypeBy(): Item.DataType = when (this) {
+        BOOLEAN -> Item.DataType.BOOLEAN
+        INTEGER -> Item.DataType.INTEGER
+        FLOAT -> Item.DataType.FLOAT
+        LONG -> Item.DataType.LONG
+        else -> Item.DataType.STRING
+    }
+
+    private fun String.getValueByTypeBy(obj: JSONObject): Any = when (this) {
+        BOOLEAN -> obj[VALUE] as Boolean
+        INTEGER -> obj[VALUE] as Int
+        FLOAT -> obj[VALUE] as Float
+        LONG -> obj[VALUE] as Long
+        else -> obj[VALUE] as String
     }
 
 

@@ -31,7 +31,7 @@ class CommandTest {
 
     @Test
     fun testSingleParamStringCommand() {
-        model.addItem(0, Item.ItemString(0, "team", "supper-pupper"))
+        model.addItem(0, Item(0, "team", Item.DataType.STRING, "supper-pupper"))
         Assert.assertEquals(
             "adb shell am broadcast -n $receiver -a $intent --es team supper-pupper", model.prepareCommand()
         )
@@ -40,11 +40,11 @@ class CommandTest {
 
     @Test
     fun testMultipleParamStringCommand() {
-        model.addItem(0, Item.ItemString(0, "team_string", "supper-pupper"))
-        model.addItem(1, Item.ItemInt(1, "team_int", 100))
-        model.addItem(2, Item.ItemFloat(2, "team_float", 100.1f))
-        model.addItem(3, Item.ItemBoolean(3, "team_boolean", false))
-        model.addItem(4, Item.ItemLong(4, "team_long", 100L))
+        model.addItem(0, Item(0, "team_string", Item.DataType.STRING, "supper-pupper"))
+        model.addItem(1, Item(1, "team_int", Item.DataType.INTEGER, 100))
+        model.addItem(2, Item(2, "team_float", Item.DataType.FLOAT, 100.1f))
+        model.addItem(3, Item(3, "team_boolean", Item.DataType.BOOLEAN, false))
+        model.addItem(4, Item(4, "team_long", Item.DataType.LONG, 100L))
         Assert.assertEquals(
             "adb shell am broadcast -n $receiver -a $intent ${CommandLineType.StringValue.type} team_string supper-pupper ${CommandLineType.IntegerValue.type} team_int 100 ${CommandLineType.FloatValue.type} team_float 100.1 ${CommandLineType.BooleanValue.type} team_boolean false ${CommandLineType.LongValue.type} team_long 100",
             model.prepareCommand(),

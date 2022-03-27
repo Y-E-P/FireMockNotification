@@ -45,7 +45,10 @@ class EditorViewModel(private val model: ParamsModel = ParamsModel()) :
                 model.updateValue(event.index, event.value)
                 updateItemsList()
             }
-            Clear -> model.clear()
+            Clear -> {
+                model.clear()
+                updateItemsList()
+            }
             Run -> setEffect { Effect.RunCommand(model.prepareCommand()) }
         }
     }
