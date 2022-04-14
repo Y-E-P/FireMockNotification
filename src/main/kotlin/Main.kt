@@ -28,13 +28,14 @@ import java.awt.Dimension
 import java.util.*
 
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
     val viewModelApp by lazy { AppViewModel() }
-    val viewModel by lazy { EditorViewModel() }
-    viewModelApp.startDeviceSearchService()
+    //start it once
+    LaunchedEffect(true) {
+        viewModelApp.startDeviceSearchService()
+    }
 
     if (isOpen) {
         Window(title = APP_NAME,
@@ -60,7 +61,7 @@ fun main() = application {
                     }
                 }
             }
-            App(viewModelApp, viewModel)
+            App(viewModelApp)
             if (openDialog.value) {
                 AboutDialog {
                     openDialog.value = false
@@ -83,8 +84,9 @@ class SplitterState {
 
 @Composable
 @Preview
-fun App(appViewModel: AppViewModel, editorViewModel: EditorViewModel) {
+fun App(appViewModel: AppViewModel) {
     val state by remember { appViewModel.viewState }
+    val editorViewModel by lazy { EditorViewModel(state.model) }
     val panelState = remember { PanelsState() }
     val animatedSize = if (panelState.splitterState.isResizing) {
         if (state.consoleOpened) panelState.expandedSize else panelState.collapsedSize

@@ -36,8 +36,6 @@ object DeviceSearchService {
 
     var monitorRunnable = Runnable {
         while (working) {
-            //Logger.d("run devices");
-
             fun onSuccess(data: String) {
                 val split = data.split("\n")
                     .toTypedArray()

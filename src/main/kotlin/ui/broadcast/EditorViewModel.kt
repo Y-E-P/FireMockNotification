@@ -9,7 +9,7 @@ import ui.broadcast.EditorContract.*
 import ui.broadcast.EditorContract.Event.*
 import utils.prepareCommand
 
-class EditorViewModel(private val model: ParamsModel = ParamsModel()) :
+class EditorViewModel(private val model: ParamsModel) :
     BaseViewModel<Event, State, Effect>(CoroutineScope(Dispatchers.Swing)) {
 
     override fun setInitialState(): State =

@@ -13,11 +13,6 @@ class ModelParser {
         private const val PACKAGE = "package"
         private const val PARAMS = "params"
         private const val TYPE = "type"
-        private const val BOOLEAN = "boolean"
-        private const val STRING = "string"
-        private const val INTEGER = "integer"
-        private const val LONG = "long"
-        private const val FLOAT = "float"
         private const val KEY = "key"
         private const val VALUE = "value"
     }
@@ -31,7 +26,7 @@ class ModelParser {
                 JSONObject().apply {
                     put(KEY, param.key)
                     put(VALUE, param.data)
-                    put(TYPE, param.getType())
+                    put(TYPE, param.type.name)
                 }.let {
                     this.add(it)
                 }
@@ -50,7 +45,7 @@ class ModelParser {
             for (i in 0 until paramsArray.size) {
                 val paramObj = (paramsArray[i] as JSONObject)
                 val key: String = paramObj[KEY] as String
-                val type = paramObj[TYPE] as String
+                val type = paramObj[TYPE] as? String ?: Item.DataType.STRING.name
                 result.addItem(i, Item(i, key, type.getTypeBy(), type.getValueByTypeBy(paramObj)))
             }
         } catch (e: ParseException) {
@@ -60,27 +55,17 @@ class ModelParser {
         return result
     }
 
-    private fun Item.getType(): String = when (this.type) {
-        Item.DataType.STRING -> STRING
-        Item.DataType.BOOLEAN -> BOOLEAN
-        Item.DataType.INTEGER -> INTEGER
-        Item.DataType.FLOAT -> FLOAT
-        Item.DataType.LONG -> LONG
+    private fun String.getTypeBy(): Item.DataType = try {
+        Item.DataType.valueOf(this)
+    } catch (e: Exception) {
+        Item.DataType.STRING
     }
 
-    private fun String.getTypeBy(): Item.DataType = when (this) {
-        BOOLEAN -> Item.DataType.BOOLEAN
-        INTEGER -> Item.DataType.INTEGER
-        FLOAT -> Item.DataType.FLOAT
-        LONG -> Item.DataType.LONG
-        else -> Item.DataType.STRING
-    }
-
-    private fun String.getValueByTypeBy(obj: JSONObject): Any = when (this) {
-        BOOLEAN -> obj[VALUE] as Boolean
-        INTEGER -> obj[VALUE] as Int
-        FLOAT -> obj[VALUE] as Float
-        LONG -> obj[VALUE] as Long
+    private fun String.getValueByTypeBy(obj: JSONObject): Any = when (getTypeBy()) {
+        Item.DataType.BOOLEAN -> obj[VALUE] as Boolean
+        Item.DataType.INTEGER -> obj[VALUE] as Int
+        Item.DataType.FLOAT -> obj[VALUE] as Float
+        Item.DataType.LONG -> obj[VALUE] as Long
         else -> obj[VALUE] as String
     }
 

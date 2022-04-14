@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import repo.Device
+import repo.ModelParser
+import repo.ParamsModel
 import repo.Reaction
 import service.DeviceSearchService
 import ui.base.BaseViewModel
@@ -17,8 +19,11 @@ import ui.console.ConsoleModel
 import java.io.BufferedReader
 import java.io.File
 
-class AppViewModel :
-    BaseViewModel<AppContract.Event, AppContract.AppState, AppContract.Effect>(CoroutineScope(Dispatchers.Swing)) {
+class AppViewModel : BaseViewModel<
+        AppContract.Event,
+        AppContract.AppState,
+        AppContract.Effect>(CoroutineScope(Dispatchers.Swing)) {
+
     private val runtime by lazy { Runtime.getRuntime() }
 
     private var currentFile: File? = null
@@ -39,7 +44,8 @@ class AppViewModel :
             consoleOpened = false,
             selected = selectedDevice,
             devicesList = emptyList(),
-            consoleOut = emptyList()
+            consoleOut = emptyList(),
+            model = ParamsModel()
         )
 
     override fun handleEvents(event: AppContract.Event) {
@@ -88,16 +94,14 @@ class AppViewModel :
     fun loadScheme(file: File) {
         CoroutineScope(Dispatchers.Swing).launch {
             processFile(file).collect {
-                //model = it.data
-                //idCounter = model.params.last().id + 1
+                setState { copy(model = it.data) }
                 currentFile = file
             }
         }
     }
 
-    private fun processFile(file: File): Flow<Reaction.Success<String>> = flow {
-        //emit(Reaction.Success(ModelParser().fromJson(file.readText())))
-        emit(Reaction.Success(file.readText()))
+    private fun processFile(file: File): Flow<Reaction.Success<ParamsModel>> = flow {
+        emit(Reaction.Success(ModelParser().fromJson(file.readText())))
     }
 
 }
@@ -118,7 +122,8 @@ class AppContract {
         val consoleOpened: Boolean,
         val selected: Device,
         val devicesList: List<Device>,
-        val consoleOut: List<ConsoleItem>
+        val consoleOut: List<ConsoleItem>,
+        val model: ParamsModel
     ) : ViewState
 
     sealed class Effect : ViewSideEffect {
