@@ -1,6 +1,5 @@
 package utils
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -10,7 +9,6 @@ import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
-@OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.cursorForHorizontalResize(): Modifier = this.pointerHoverIcon(PointerIcon((Cursor(Cursor.N_RESIZE_CURSOR))))
 
 fun Component.openFile(): File? {
@@ -25,14 +23,14 @@ fun Component.openFile(): File? {
     } else null
 }
 
-fun Component.saveFile(json: String) {
+fun Component.saveFile(fileCallback: (File)-> Unit) {
     val fileChooser = JFileChooser()
     fileChooser.currentDirectory = File(System.getProperty("user.home"))
     fileChooser.fileFilter = FileNameExtensionFilter("JSON files (*.json)", "json")
     val result = fileChooser.showSaveDialog(this)
     if (result == JFileChooser.APPROVE_OPTION) {
         val selectedFile = fileChooser.selectedFile
-        selectedFile.writeText(json)
+        fileCallback(selectedFile)
         println("Selected file: " + selectedFile.absolutePath)
     }
 }

@@ -4,6 +4,7 @@ import repo.Item
 import ui.base.ViewEvent
 import ui.base.ViewSideEffect
 import ui.base.ViewState
+import java.io.File
 
 class EditorContract {
 
@@ -17,6 +18,9 @@ class EditorContract {
         object AddItem : Event()
         object Clear : Event()
         object Run : Event()
+        data class SaveAs(val file: File) : Event()
+        object Save : Event()
+        data class Load(val file: File) : Event()
     }
 
     data class State(
@@ -27,5 +31,6 @@ class EditorContract {
 
     sealed class Effect : ViewSideEffect {
         data class RunCommand(val cmd: String) : Effect()
+        object CreateFile : Effect()
     }
 }

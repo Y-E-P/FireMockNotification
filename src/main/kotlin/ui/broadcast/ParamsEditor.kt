@@ -1,6 +1,5 @@
 package ui.broadcast
 
-import AppViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -11,48 +10,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import repo.Item
 import repo.Item.DataType.BOOLEAN
 import repo.Item.DataType.values
 import resources.ResString
 import ui.base.BaseDropdown
-import ui.base.LAUNCH_LISTEN_FOR_EFFECTS
 import java.util.*
 
 @Composable
-fun ParamsEditorScreen(modifier: Modifier = Modifier, controller: AppViewModel, viewModel: EditorViewModel) {
+fun ParamsEditorScreen(modifier: Modifier = Modifier, viewModel: EditorViewModel) {
     val state by remember { viewModel.viewState }
     ParamsEditor(
         modifier,
         state = state,
-        effectFlow = viewModel.effect,
-        onEventSent = { event -> viewModel.setEvent(event) },
-        onOutsideCommand = {
-            if (it is EditorContract.Effect.RunCommand) {
-                controller.run(it.cmd)
-            }
-        }
-    )
+        onEventSent = { event -> viewModel.setEvent(event) })
 }
 
 @Composable
 private fun ParamsEditor(
     modifier: Modifier = Modifier,
     state: EditorContract.State,
-    effectFlow: Flow<EditorContract.Effect>?,
-    onEventSent: (event: EditorContract.Event) -> Unit,
-    onOutsideCommand: (event: EditorContract.Effect) -> Unit
+    onEventSent: (event: EditorContract.Event) -> Unit
 ) {
-    LaunchedEffect(LAUNCH_LISTEN_FOR_EFFECTS) {
-        effectFlow?.onEach { itEffect ->
-            when (itEffect) {
-                is EditorContract.Effect.RunCommand -> onOutsideCommand(itEffect)
-            }
-        }?.collect()
-    }
     Column(modifier.fillMaxSize()) {
         val buttonModifier = Modifier.padding(4.dp)
         Row {

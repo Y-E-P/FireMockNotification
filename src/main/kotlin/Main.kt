@@ -3,10 +3,12 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -15,10 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import resources.ResString
 import resources.ResString.APP_NAME
 import ui.base.AboutDialog
 import ui.base.BaseDropdown
+import ui.base.LAUNCH_LISTEN_FOR_EFFECTS
+import ui.broadcast.EditorContract
 import ui.broadcast.EditorViewModel
 import ui.broadcast.ParamsEditorScreen
 import ui.console.ConsoleOutput
@@ -32,10 +38,7 @@ fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
     val viewModelApp by lazy { AppViewModel() }
-    //start it once
-    LaunchedEffect(true) {
-        viewModelApp.startDeviceSearchService()
-    }
+    val editorViewModel by lazy { EditorViewModel() }
 
     if (isOpen) {
         Window(title = APP_NAME,
@@ -47,21 +50,35 @@ fun main() = application {
                 viewModelApp.shutDown()
                 isOpen = false
             }) {
-            window.minimumSize = Dimension(1024, 768)
-            viewModelApp.onSaveAsCallback = {
-                window.saveFile(it)
+
+            LaunchedEffect(LAUNCH_LISTEN_FOR_EFFECTS) {
+                viewModelApp.startDeviceSearchService()
+                editorViewModel.effect.onEach { itEffect ->
+                    when (itEffect) {
+                        is EditorContract.Effect.CreateFile ->
+                            window.saveFile { file ->
+                                editorViewModel.setEvent(EditorContract.Event.SaveAs(file))
+                            }
+                        is EditorContract.Effect.RunCommand -> viewModelApp.run(itEffect.cmd)
+                    }
+                }.collect()
             }
+            window.minimumSize = Dimension(1024, 768)
             FireMenu {
                 when (it) {
                     MenuItem.ABOUT -> openDialog.value = true
-                    MenuItem.SAVE -> viewModelApp.setEvent(AppContract.Event.Save(""))
-                    MenuItem.SAVE_AS -> viewModelApp.setEvent(AppContract.Event.SaveAs(""))
+                    MenuItem.SAVE -> editorViewModel.setEvent(EditorContract.Event.Save)
+                    MenuItem.SAVE_AS -> {
+                        window.saveFile { file ->
+                            editorViewModel.setEvent(EditorContract.Event.SaveAs(file))
+                        }
+                    }
                     MenuItem.OPEN -> {
-                        window.openFile()?.let { file -> viewModelApp.loadScheme(file) }
+                        window.openFile()?.let { file -> editorViewModel.setEvent(EditorContract.Event.Load(file)) }
                     }
                 }
             }
-            App(viewModelApp)
+            App(viewModelApp, editorViewModel)
             if (openDialog.value) {
                 AboutDialog {
                     openDialog.value = false
@@ -84,9 +101,8 @@ class SplitterState {
 
 @Composable
 @Preview
-fun App(appViewModel: AppViewModel) {
+fun App(appViewModel: AppViewModel, editorViewModel: EditorViewModel) {
     val state by remember { appViewModel.viewState }
-    val editorViewModel by lazy { EditorViewModel(state.model) }
     val panelState = remember { PanelsState() }
     val animatedSize = if (panelState.splitterState.isResizing) {
         if (state.consoleOpened) panelState.expandedSize else panelState.collapsedSize
@@ -102,7 +118,7 @@ fun App(appViewModel: AppViewModel) {
                 modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
                 appViewModel
             ) {
-                ParamsEditorScreen(controller = appViewModel, viewModel = editorViewModel)
+                ParamsEditorScreen(viewModel = editorViewModel)
             }
             ConsoleOutput(
                 modifier = Modifier.align(Alignment.BottomCenter).height(animatedSize),
