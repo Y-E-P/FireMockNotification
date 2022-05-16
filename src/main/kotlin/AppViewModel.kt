@@ -19,7 +19,7 @@ class AppViewModel : BaseViewModel<
     private val runtime by lazy { Runtime.getRuntime() }
 
     private val consoleModel = ConsoleModel()
-    var selectedDevice: Device = Device("-1", "none", "Not selected")
+    var selectedDevice: Device = Device("-1", "none", "No devices")
     private val deviceService = DeviceSearchService
 
     init {
