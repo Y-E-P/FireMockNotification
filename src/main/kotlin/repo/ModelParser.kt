@@ -61,12 +61,16 @@ class ModelParser {
         Item.DataType.STRING
     }
 
-    private fun String.getValueByTypeBy(obj: JSONObject): Any = when (getTypeBy()) {
-        Item.DataType.BOOLEAN -> obj[VALUE] as Boolean
-        Item.DataType.INTEGER -> obj[VALUE] as Int
-        Item.DataType.FLOAT -> obj[VALUE] as Float
-        Item.DataType.LONG -> obj[VALUE] as Long
-        else -> obj[VALUE] as String
+    private fun String.getValueByTypeBy(obj: JSONObject): Any {
+        val rawItem = obj[VALUE] as? String
+        val item = when (getTypeBy()) {
+            Item.DataType.BOOLEAN -> rawItem?.toBoolean() ?: false
+            Item.DataType.INTEGER -> rawItem?.toInt() ?: 0
+            Item.DataType.FLOAT -> rawItem?.toFloat() ?: 0.0f
+            Item.DataType.LONG -> rawItem?.toLong() ?: 0L
+            else -> rawItem ?: ""
+        }
+        return item
     }
 
 
