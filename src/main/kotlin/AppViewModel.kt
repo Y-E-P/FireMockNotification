@@ -1,14 +1,7 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import repo.Device
-import repo.ModelParser
-import repo.ParamsModel
-import repo.Reaction
 import service.DeviceSearchService
 import ui.base.BaseViewModel
 import ui.base.ViewEvent
