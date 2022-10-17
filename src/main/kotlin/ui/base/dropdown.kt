@@ -7,6 +7,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,14 +25,15 @@ fun <T> BaseDropdown(
     var expanded by remember { mutableStateOf(false) }
     var data by remember { mutableStateOf(type) }
     Box(modifier = modifier) {
-        Button(onClick = { expanded = true }) {
+        Button(onClick = { expanded = !expanded }) {
             title(data)
             Icon(
-                if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
+                if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = ResString.changeType
             )
         }
         DropdownMenu(
+            focusable = false,
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
