@@ -35,54 +35,53 @@ import java.util.*
 
 
 fun main() = application {
-    var isOpen by remember { mutableStateOf(true) }
     val openDialog = remember { mutableStateOf(false) }
     val viewModelApp by lazy { AppViewModel() }
     val editorViewModel by lazy { EditorViewModel() }
 
-    if (isOpen) {
-        Window(title = APP_NAME,
-            icon = loadSvgPainter(
-                this::class.java.classLoader.getResourceAsStream("notification_8.svg"),
-                LocalDensity.current
-            ),
-            onCloseRequest = {
-                viewModelApp.shutDown()
-                isOpen = false
-            }) {
+    Window(title = APP_NAME,
+        icon = loadSvgPainter(
+            this::class.java.classLoader.getResourceAsStream("notification_8.svg"),
+            LocalDensity.current
+        ),
+        onCloseRequest = {
+            viewModelApp.shutDown()
+            exitApplication()
+        }) {
 
-            LaunchedEffect(LAUNCH_LISTEN_FOR_EFFECTS) {
-                viewModelApp.startDeviceSearchService()
-                editorViewModel.effect.onEach { itEffect ->
-                    when (itEffect) {
-                        is EditorContract.Effect.CreateFile ->
-                            window.saveFile { file ->
-                                editorViewModel.setEvent(EditorContract.Event.SaveAs(file))
-                            }
-                        is EditorContract.Effect.RunCommand -> viewModelApp.run(itEffect.cmd)
-                    }
-                }.collect()
-            }
-            window.minimumSize = Dimension(1024, 768)
-            FireMenu {
-                when (it) {
-                    MenuItem.ABOUT -> openDialog.value = true
-                    MenuItem.SAVE -> editorViewModel.setEvent(EditorContract.Event.Save)
-                    MenuItem.SAVE_AS -> {
+        LaunchedEffect(LAUNCH_LISTEN_FOR_EFFECTS) {
+            viewModelApp.startDeviceSearchService()
+            editorViewModel.effect.onEach { itEffect ->
+                when (itEffect) {
+                    is EditorContract.Effect.CreateFile ->
                         window.saveFile { file ->
                             editorViewModel.setEvent(EditorContract.Event.SaveAs(file))
                         }
+
+                    is EditorContract.Effect.RunCommand -> viewModelApp.run(itEffect.cmd)
+                }
+            }.collect()
+        }
+        window.minimumSize = Dimension(1024, 768)
+        FireMenu {
+            when (it) {
+                MenuItem.ABOUT -> openDialog.value = true
+                MenuItem.SAVE -> editorViewModel.setEvent(EditorContract.Event.Save)
+                MenuItem.SAVE_AS -> {
+                    window.saveFile { file ->
+                        editorViewModel.setEvent(EditorContract.Event.SaveAs(file))
                     }
-                    MenuItem.OPEN -> {
-                        window.openFile()?.let { file -> editorViewModel.setEvent(EditorContract.Event.Load(file)) }
-                    }
+                }
+
+                MenuItem.OPEN -> {
+                    window.openFile()?.let { file -> editorViewModel.setEvent(EditorContract.Event.Load(file)) }
                 }
             }
-            App(viewModelApp, editorViewModel)
-            if (openDialog.value) {
-                AboutDialog {
-                    openDialog.value = false
-                }
+        }
+        App(viewModelApp, editorViewModel)
+        if (openDialog.value) {
+            AboutDialog {
+                openDialog.value = false
             }
         }
     }
