@@ -27,4 +27,6 @@ object ResString {
     const val consoleOutput: String = "Console"
     const val ok: String = "OK"
     const val cancel: String = "Cancel"
+    const val save: String = "Save"
+    const val editItemDialogTitle: String = "Edit Item"
 }

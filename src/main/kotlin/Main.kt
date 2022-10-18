@@ -28,6 +28,7 @@ import ui.broadcast.EditorContract
 import ui.broadcast.EditorViewModel
 import ui.broadcast.ParamsEditorScreen
 import ui.console.ConsoleOutput
+import ui.dialogs.AddItemDialog
 import utils.openFile
 import utils.saveFile
 import java.awt.Dimension
@@ -63,7 +64,7 @@ fun main() = application {
             }.collect()
         }
         window.minimumSize = Dimension(1024, 768)
-        FireMenu {
+        ToolboxMenu {
             when (it) {
                 MenuItem.ABOUT -> openDialog.value = true
                 MenuItem.SAVE -> editorViewModel.setEvent(EditorContract.Event.Save)

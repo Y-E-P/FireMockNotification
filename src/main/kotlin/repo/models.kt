@@ -24,8 +24,12 @@ data class ParamsModel(
     private var idCounter: Int = 0
 ) {
 
-    fun addItem(id: Int = ++idCounter, item: Item = Item(id, "", Item.DataType.STRING, "")) {
-        params.add(item)
+    fun createItem(id: Int = ++idCounter, item: Item = Item(id, "", Item.DataType.STRING, "")): Item {
+        return item
+    }
+
+    fun addItem(id: Int = ++idCounter, item: Item){
+        params.add(item.copy(id = id))
     }
 
     fun updateParam(index: Int, item: Item) {

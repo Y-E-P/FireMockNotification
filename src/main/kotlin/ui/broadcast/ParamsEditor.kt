@@ -15,6 +15,7 @@ import repo.Item.DataType.BOOLEAN
 import repo.Item.DataType.values
 import resources.ResString
 import ui.base.BaseDropdown
+import ui.dialogs.AddItemDialog
 import java.util.*
 
 @Composable
@@ -51,9 +52,16 @@ private fun ParamsEditor(
         DefaultParams(Modifier.padding(6.dp), state.packageName, state.intentName) { message ->
             onEventSent(message)
         }
+
+        if (state.dialogState is EditorContract.DialogState.Open) {
+            AddItemDialog(state.dialogState.item,
+                onMessage = {
+                    onEventSent(it)
+                })
+        }
         Row(modifier = Modifier.wrapContentSize()) {
             Button(modifier = Modifier.padding(4.dp), onClick = {
-                onEventSent(EditorContract.Event.AddItem)
+                onEventSent(EditorContract.Event.CreateItem)
             }) {
                 Text(ResString.addParam)
             }
@@ -144,7 +152,7 @@ fun CombinedText(
     modifier: Modifier = Modifier,
     label: String,
     text: String,
-    onTextReady: (text: String) -> Unit
+    onTextReady: (text: String) -> Unit,
 ) {
     var isInError by remember { mutableStateOf(false) }
     OutlinedTextField(
@@ -157,6 +165,27 @@ fun CombinedText(
                 onTextReady(newText.trim())
             }
             isInError = newText.isEmpty()
+        }
+    )
+}
+
+@Composable
+fun CombinedText(
+    modifier: Modifier = Modifier,
+    label: String,
+    text: String,
+    onTextReady: (text: String) -> Unit,
+    isEmptyState: Boolean
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        isError = isEmptyState,
+        value = text,
+        label = { Text(text = if (!isEmptyState) label else ResString.emptyError) },
+        onValueChange = { newText ->
+            if (newText != text) {
+                onTextReady(newText.trim())
+            }
         }
     )
 }

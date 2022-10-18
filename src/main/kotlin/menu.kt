@@ -8,7 +8,7 @@ import resources.ResString
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun FrameWindowScope.FireMenu(onClickItem: (MenuItem) -> Unit) {
+fun FrameWindowScope.ToolboxMenu(onClickItem: (MenuItem) -> Unit) {
     MenuBar {
         Menu(ResString.file, mnemonic = 'F') {
             Item(

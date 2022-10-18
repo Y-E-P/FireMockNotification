@@ -19,43 +19,59 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
 
     private var currentFile: File? = null
 
-    override fun setInitialState(): State = State("", "")
+    override fun setInitialState(): State = State("", "", DialogState.Closed)
     private val model: ParamsModel = ParamsModel()
 
     override fun handleEvents(event: Event) {
         when (event) {
-            AddItem -> {
-                model.addItem()
+            CreateItem -> {
+                setState { copy(dialogState = DialogState.Open(model.createItem())) }
+            }
+
+            CancelItem -> {
+                setState { copy(dialogState = DialogState.Closed) }
+            }
+
+            is SaveItem -> {
+                model.addItem(event.item.id, event.item)
                 updateItemsList()
             }
+
             is IntentUpdate -> {
                 model.intent = event.intentName
                 setState { copy(intentName = model.intent) }
             }
+
             is KeyUpdate -> {
                 model.updateKey(event.index, event.key)
                 updateItemsList()
             }
+
             is PackageUpdate -> {
                 model.packageName = event.packageName
                 setState { copy(packageName = model.packageName) }
             }
+
             is Remove -> {
                 model.removeItem(event.index)
                 updateItemsList()
             }
+
             is TypeUpdate -> {
                 model.updateType(event.index, event.type)
                 updateItemsList()
             }
+
             is ValueUpdate -> {
                 model.updateValue(event.index, event.value)
                 updateItemsList()
             }
+
             Clear -> {
                 model.clear()
                 setState { copy(packageName = "", intentName = "", itemsList = ArrayList(model.params)) }
             }
+
             Run -> setEffect { Effect.RunCommand(model.prepareCommand()) }
             is SaveAs -> {
                 currentFile = event.file
@@ -63,6 +79,7 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
                     event.file.writeText(ModelParser().toJson(paramsModel = model))
                 }
             }
+
             Save -> {
                 if (currentFile == null) {
                     setEffect { Effect.CreateFile }
@@ -72,6 +89,7 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
                     }
                 }
             }
+
             is Load -> {
                 CoroutineScope(Dispatchers.Swing).launch {
                     processFile(event.file).collect {
