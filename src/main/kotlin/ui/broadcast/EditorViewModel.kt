@@ -28,6 +28,10 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
                 setState { copy(dialogState = DialogState.Open(model.createItem())) }
             }
 
+            is EditItem -> {
+                setState { copy(dialogState = DialogState.Open(event.item.copy())) }
+            }
+
             CancelItem -> {
                 setState { copy(dialogState = DialogState.Closed) }
             }
@@ -35,16 +39,12 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
             is SaveItem -> {
                 model.addItem(event.item.id, event.item)
                 updateItemsList()
+                setState { copy(dialogState = DialogState.Closed) }
             }
 
             is IntentUpdate -> {
                 model.intent = event.intentName
                 setState { copy(intentName = model.intent) }
-            }
-
-            is KeyUpdate -> {
-                model.updateKey(event.index, event.key)
-                updateItemsList()
             }
 
             is PackageUpdate -> {
@@ -53,23 +53,13 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
             }
 
             is Remove -> {
-                model.removeItem(event.index)
-                updateItemsList()
-            }
-
-            is TypeUpdate -> {
-                model.updateType(event.index, event.type)
-                updateItemsList()
-            }
-
-            is ValueUpdate -> {
-                model.updateValue(event.index, event.value)
+                model.removeItem(event.id)
                 updateItemsList()
             }
 
             Clear -> {
                 model.clear()
-                setState { copy(packageName = "", intentName = "", itemsList = ArrayList(model.params)) }
+                setState { copy(packageName = "", intentName = "", itemsList = ArrayList()) }
             }
 
             Run -> setEffect { Effect.RunCommand(model.prepareCommand()) }
@@ -97,7 +87,7 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
                             copy(
                                 intentName = it.data.intent,
                                 packageName = it.data.packageName,
-                                itemsList = it.data.params
+                                itemsList = it.data.params.map { it.value }
                             )
                         }
                         currentFile = event.file
@@ -112,6 +102,6 @@ class EditorViewModel : BaseViewModel<Event, State, Effect>(CoroutineScope(Dispa
     }
 
     private fun updateItemsList() {
-        setState { copy(itemsList = ArrayList(model.params)) }
+        setState { copy(itemsList = model.params.map { it.value }.toList()) }
     }
 }

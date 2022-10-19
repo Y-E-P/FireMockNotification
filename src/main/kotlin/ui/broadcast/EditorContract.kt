@@ -12,11 +12,9 @@ class EditorContract {
     sealed class Event : ViewEvent {
         data class PackageUpdate(val packageName: String) : Event()
         data class IntentUpdate(val intentName: String) : Event()
-        data class KeyUpdate(val index: Int, val key: String) : Event()
-        data class ValueUpdate(val index: Int, val value: String) : Event()
-        data class TypeUpdate(val index: Int, val type: Item.DataType) : Event()
-        data class Remove(val index: Int) : Event()
+        data class Remove(val id: Int) : Event()
         object CreateItem : Event()
+        data class EditItem(val item: Item) : Event()
         object CancelItem : Event()
         data class SaveItem(val item: Item) : Event()
         object Clear : Event()
@@ -33,9 +31,9 @@ class EditorContract {
         val itemsList: List<Item> = listOf()
     ) : ViewState
 
-    sealed class DialogState{
-        data class Open(val item: Item): DialogState()
-        object Closed: DialogState()
+    sealed class DialogState {
+        data class Open(val item: Item) : DialogState()
+        object Closed : DialogState()
     }
 
     sealed class Effect : ViewSideEffect {

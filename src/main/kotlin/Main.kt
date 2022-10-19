@@ -28,7 +28,6 @@ import ui.broadcast.EditorContract
 import ui.broadcast.EditorViewModel
 import ui.broadcast.ParamsEditorScreen
 import ui.console.ConsoleOutput
-import ui.dialogs.AddItemDialog
 import utils.openFile
 import utils.saveFile
 import java.awt.Dimension
@@ -100,7 +99,6 @@ class SplitterState {
 }
 
 @Composable
-@Preview
 fun App(appViewModel: AppViewModel, editorViewModel: EditorViewModel) {
     val state by remember { appViewModel.viewState }
     val panelState = remember { PanelsState() }

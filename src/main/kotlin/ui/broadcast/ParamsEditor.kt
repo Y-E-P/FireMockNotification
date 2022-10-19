@@ -1,14 +1,21 @@
 package ui.broadcast
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import repo.Item
 import repo.Item.DataType.BOOLEAN
@@ -55,9 +62,12 @@ private fun ParamsEditor(
 
         if (state.dialogState is EditorContract.DialogState.Open) {
             AddItemDialog(state.dialogState.item,
-                onMessage = {
-                    onEventSent(it)
-                })
+                onCanceled = {
+                    onEventSent(EditorContract.Event.CancelItem)
+                }, onSave = {
+                    onEventSent(EditorContract.Event.SaveItem(it))
+                }
+            )
         }
         Row(modifier = Modifier.wrapContentSize()) {
             Button(modifier = Modifier.padding(4.dp), onClick = {
@@ -66,11 +76,20 @@ private fun ParamsEditor(
                 Text(ResString.addParam)
             }
         }
+        Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
+            Text(modifier = Modifier.weight(0.4f), text = "Key")
+            Spacer(Modifier.width(6.dp))
+            Text(modifier = Modifier.align(Alignment.CenterVertically).weight(0.4f), text = "Value")
+            Spacer(Modifier.width(6.dp))
+            Text(modifier = Modifier.align(Alignment.CenterVertically).weight(0.2f), text = "Actions")
+        }
+        Divider()
         LazyColumn {
-            itemsIndexed(state.itemsList, key = { _, item -> item.id }) { index, item ->
-                ParamItemView(index = index, item = item, onMessage = {
+            items(state.itemsList, key = { item -> item.id }) { item ->
+                ParamItemView(item = item, onMessage = {
                     onEventSent(it)
                 })
+                Divider()
             }
         }
     }
@@ -97,52 +116,23 @@ fun DefaultParams(
 @Composable
 fun ParamItemView(
     modifier: Modifier = Modifier,
-    index: Int,
     item: Item,
     onMessage: (EditorContract.Event) -> Unit
 ) {
-    val dataType = remember { mutableStateOf(item.type) }
     Row(modifier = modifier.wrapContentSize().padding(4.dp)) {
-        CombinedText(modifier = Modifier.weight(0.3f), label = ResString.keyLabel, text = item.key, onTextReady = {
-            onMessage(EditorContract.Event.KeyUpdate(index, it))
-        })
+        Text(modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f), text = item.key)
         Spacer(Modifier.width(6.dp))
-        if (dataType.value == BOOLEAN) {
-            BaseDropdown(modifier = Modifier.align(Alignment.CenterVertically), type = false, listOf(true, false), {
-                onMessage(EditorContract.Event.ValueUpdate(index, it.toString()))
-            }, title = {
-                Text(text = it.toString())
-            }) {
-                Text(text = if (it) ResString.trueString else ResString.falseString)
-            }
-        } else {
-            CombinedText(
-                modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f),
-                label = ResString.valueLabel,
-                text = item.data.toString(),
-                onTextReady = {
-                    onMessage(EditorContract.Event.ValueUpdate(index, it))
-                })
-        }
+        Text(modifier = Modifier.align(Alignment.CenterVertically).weight(0.3f), text = item.data.toString())
         Spacer(Modifier.width(6.dp))
-
-        BaseDropdown(
+        IconButton(
             modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-            type = item.type,
-            values().toList(),
-            title = {
-                Text(text = it.name.uppercase(Locale.getDefault()))
-            },
-            onItemSelected = {
-                onMessage(EditorContract.Event.TypeUpdate(index, it))
-                dataType.value = it
-            }) {
-            Text(text = it.name.uppercase(Locale.getDefault()))
+            onClick = { onMessage(EditorContract.Event.EditItem(item)) }) {
+            Icon(Icons.Default.Edit, contentDescription = "Edit item")
         }
         IconButton(
             modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-            onClick = { onMessage(EditorContract.Event.Remove(index)) }) {
-            Icon(Icons.Default.Delete, contentDescription = null)
+            onClick = { onMessage(EditorContract.Event.Remove(item.id)) }) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete item")
         }
     }
 }

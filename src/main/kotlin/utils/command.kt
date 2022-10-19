@@ -32,8 +32,8 @@ fun ParamsModel.prepareCommand(): String {
         .plus(" ")
         .plus(this.intent)
     for (item in this.params) {
-        command = command.plus(" ").plus(item.commandType().type).plus(" ")
-        command = command.plus(item.key).plus(" ").plus(item.data.toString()).escape()!!
+        command = command.plus(" ").plus(item.value.commandType().type).plus(" ")
+        command = command.plus(item.key).plus(" ").plus(item.value.data.toString()).escape()!!
     }
     return command
 }

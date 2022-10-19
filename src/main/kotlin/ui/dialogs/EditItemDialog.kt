@@ -3,11 +3,7 @@ package ui.dialogs
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
@@ -26,17 +22,20 @@ import ui.broadcast.EditorContract
 import java.awt.Dimension
 
 @Composable
-fun AddItemDialog(item: Item, onMessage: (EditorContract.Event) -> Unit) {
+fun AddItemDialog(
+    item: Item, onCanceled: () -> Unit,
+    onSave: (Item) -> Unit
+) {
     Dialog(
         resizable = true,
         state = rememberDialogState(position = WindowPosition(Alignment.Center)),
         title = ResString.editItemDialogTitle,
         onCloseRequest = {
-            onMessage(EditorContract.Event.CancelItem)
+            onCanceled()
         }) {
         window.minimumSize = Dimension(500, 250)
         Column(Modifier.fillMaxSize()) {
-            ParamItemView(item = item, onMessage = onMessage)
+            ParamItemView(item = item, onCanceled = onCanceled, onSave = onSave)
         }
     }
 }
@@ -44,16 +43,15 @@ fun AddItemDialog(item: Item, onMessage: (EditorContract.Event) -> Unit) {
 @Composable
 @Preview
 fun PreviewAddItemDialog() {
-    ParamItemView(item = Item(0, "key", Item.DataType.STRING, "")) {
-
-    }
+    ParamItemView(item = Item(0, "key", Item.DataType.STRING, ""), onSave = {}, onCanceled = {})
 }
 
 @Composable
 fun ParamItemView(
     modifier: Modifier = Modifier,
     item: Item,
-    onMessage: (EditorContract.Event) -> Unit
+    onCanceled: () -> Unit,
+    onSave: (Item) -> Unit
 ) {
     var dataType by remember { mutableStateOf(item.type) }
     var data by remember { mutableStateOf(item.data) }
@@ -98,15 +96,17 @@ fun ParamItemView(
         Spacer(Modifier.weight(1f))
         Row(Modifier.padding(6.dp).align(Alignment.End)) {
             Button(onClick = {
-                onMessage(EditorContract.Event.CancelItem)
+                onCanceled()
             }) {
                 Text(ResString.cancel)
             }
             Spacer(Modifier.width(6.dp))
             Button(onClick = {
                 errors = listOf(key.isEmpty(), data.toString().isEmpty())
-                if (errors.any { false }) {
-                    onMessage(EditorContract.Event.SaveItem(Item(item.id, key, dataType, data)))
+                println(errors.any {false})
+                println(errors.toString())
+                if (errors.any { !it }) {
+                    onSave(Item(item.id, key, dataType, data))
                 }
             }) {
                 Text(ResString.save)

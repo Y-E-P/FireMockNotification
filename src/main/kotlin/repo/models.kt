@@ -1,6 +1,7 @@
 package repo
 
 import java.util.*
+import kotlin.collections.HashMap
 
 
 data class Item(val id: Int, val key: String, val type: DataType, val data: Any) {
@@ -20,7 +21,7 @@ sealed class Reaction<out T> {
 data class ParamsModel(
     var intent: String = "",
     var packageName: String = "",
-    val params: LinkedList<Item> = LinkedList(),
+    val params: MutableMap<Int, Item> = HashMap(),
     private var idCounter: Int = 0
 ) {
 
@@ -29,23 +30,11 @@ data class ParamsModel(
     }
 
     fun addItem(id: Int = ++idCounter, item: Item){
-        params.add(item.copy(id = id))
-    }
-
-    fun updateParam(index: Int, item: Item) {
-        params[index] = item
-    }
-
-    fun updateKey(index: Int, key: String) {
-        params[index] = params[index].copy(key = key)
-    }
-
-    fun updateValue(index: Int, value: Any) {
-        params[index] = params[index].copy(data = value)
+        params[id] = item
     }
 
     fun updateType(index: Int, value: Item.DataType) {
-        val id = params[index].id
+        /*val id = params[index].id
         val key = params[index].key
         params[index] = when (value) {
             Item.DataType.LONG -> Item(id, key, value, 0L)
@@ -53,11 +42,11 @@ data class ParamsModel(
             Item.DataType.INTEGER -> Item(id, key, value, 0)
             Item.DataType.FLOAT -> Item(id, key, value, 0.0f)
             Item.DataType.BOOLEAN -> Item(id, key, value, false)
-        }
+        }*/
     }
 
-    fun removeItem(index: Int) {
-        params.removeAt(index)
+    fun removeItem(id: Int) {
+        params.remove(id)
     }
 
     fun clear() {

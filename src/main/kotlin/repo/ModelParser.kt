@@ -25,8 +25,8 @@ class ModelParser {
             for (param in paramsModel.params) {
                 JSONObject().apply {
                     put(KEY, param.key)
-                    put(VALUE, param.data)
-                    put(TYPE, param.type.name)
+                    put(VALUE, param.value.data)
+                    put(TYPE, param.value.type.name)
                 }.let {
                     this.add(it)
                 }
